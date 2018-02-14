@@ -53,12 +53,19 @@ ACom.setProperty('creatures_headers', ['picture', 'name', 'age', 'lifestage', 's
 ACom.prepareProperty(function creature_options_row() {
 
 	var row = document.createElement('tr'),
-	    column = document.createElement('td');
+	    column = document.createElement('td'),
+	    pick_up;
+
+	// Indicate this is the actions row
+	row.classList.add('actions-row');
 
 	column.setAttribute('colspan', this.creatures_headers.length);
 	row.appendChild(column);
 
-	column.textContent = 'test';
+	pick_up = this.createActionElement('Pickup', 'syst.s16', 7);
+	pick_up.dataset.click_image_index = 6;
+
+	column.appendChild(pick_up);
 
 	return row;
 });
@@ -98,6 +105,104 @@ ACom.setProperty(function speed() {
 	if (this._speed != null) {
 		this.capp.setSpeed(value);
 	}
+});
+
+/**
+ * Get a creature
+ *
+ * @author   Jelle De Loecker   <jelle@develry.be>
+ * @since    0.1.0
+ * @version  0.1.0
+ */
+ACom.setMethod(function getCreature(id_or_moniker, callback) {
+	return this.capp.getCreature(id_or_moniker, callback);
+});
+
+/**
+ * Create an action element
+ *
+ * @author   Jelle De Loecker   <jelle@develry.be>
+ * @since    0.1.0
+ * @version  0.1.0
+ */
+ACom.setMethod(function createActionElement(title, s16_name, index) {
+
+	var that = this,
+	    wrapper_el = document.createElement('div'),
+	    title_el = document.createElement('span'),
+	    s16_el = document.createElement('s16-image'),
+	    method_name;
+
+	wrapper_el.appendChild(s16_el);
+	wrapper_el.appendChild(title_el);
+	wrapper_el.classList.add('action');
+
+	if (index == null) {
+		index = 0;
+	}
+
+	s16_el.s16 = s16_name;
+	s16_el.image_index = index;
+	title_el.textContent = title;
+
+	method_name = 'do' + title.camelize() + 'Action';
+
+	wrapper_el.addEventListener('mousedown', function onDown(e) {
+		if (wrapper_el.dataset.click_image_index) {
+			s16_el.image_index = wrapper_el.dataset.click_image_index;
+		}
+	});
+
+	wrapper_el.addEventListener('click', function onClick(e) {
+		if (typeof that[method_name] == 'function') {
+
+			// Use `attr`, not `data`, because it gives back old data
+			var moniker = $(wrapper_el).parents('[data-moniker]').first().attr('data-moniker');
+
+			if (moniker) {
+				that.getCreature(moniker, function gotCreature(err, creature) {
+
+					if (err) {
+						throw err;
+					}
+
+					that[method_name](wrapper_el, creature);
+				});
+			} else {
+				that[method_name](wrapper_el);
+			}
+		}
+	});
+
+	wrapper_el.addEventListener('mouseup', function onUp(e) {
+		// Reset the index
+		s16_el.image_index = index;
+	});
+
+	return wrapper_el;
+});
+
+/**
+ * Pickup the given creature
+ *
+ * @author   Jelle De Loecker   <jelle@develry.be>
+ * @since    0.1.0
+ * @version  0.1.0
+ */
+ACom.setMethod(function doPickupAction(action_element, creature) {
+
+	if (!creature) {
+		throw new Error('Creature has not been defined, can not pick up');
+	}
+
+	// Pick up the creature
+	creature.pickup();
+
+	// Activate the window
+	this.capp.ole.sendJSON([
+		{type: 'c2window'},
+		{type: 'activatewindow'}
+	]);
 });
 
 /**
@@ -170,8 +275,6 @@ ACom.setMethod(function loadSpritesTab(sprites_element) {
 			throw err;
 		}
 
-		console.log('Got files:', files);
-
 		files.forEach(function eachFile(file, index) {
 
 			var lfile = file.toLowerCase(),
@@ -205,7 +308,6 @@ ACom.setMethod(function loadSpritesTab(sprites_element) {
 	this.has_s16_listener = true;
 
 	checkAppears = elementAppears('new-s16', {live: true}, function onS16C(element) {
-		console.log('APPEARS')
 		element.showImage(0);
 	});
 });

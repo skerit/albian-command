@@ -18,6 +18,11 @@ body {
 	color: #ffffff;
 }
 
+main {
+	height: 100vh;
+	overflow-y: auto;
+}
+
 a {
 	text-decoration: none;
 	color: inherit;
@@ -99,6 +104,10 @@ a {
 
 	tbody:nth-child(odd) tr {
 		background-color: @color-tr-odd;
+
+		.action {
+			background-color: @color-main-bg;
+		}
 	}
 
 	tbody tr:hover {
@@ -108,6 +117,22 @@ a {
 	tbody tr.selected {
 		background-color: lighten(@color-main-bg, 30%);
 	}
+}
+
+.actions-row {
+	.flexParent();
+	padding: 1rem;
+
+	.action {
+		background-color: @color-two;
+	}
+}
+
+.action {
+	.flexParent(column);
+	padding: 1rem;
+	cursor: pointer;
+	text-align: center;
 }
 
 s16-collection {

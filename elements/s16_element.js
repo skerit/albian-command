@@ -10,12 +10,45 @@
  */
 class S16Image extends HTMLElement {
 
+	get s16() {
+		return this._s16;
+	}
+
+	set s16(value) {
+
+		if (typeof value == 'string') {
+			value = new Blast.Classes.Develry.Creatures.S16(capp, value);
+		}
+
+		this._s16 = value;
+
+		if (this.image_index != null) {
+			this.image_index = this.image_index;
+		}
+	}
+
+	get image_index() {
+		return this._image_index;
+	}
+
+	set image_index(index) {
+		var that = this;
+		this._image_index = index;
+
+		if (!this.s16) {
+			return;
+		}
+
+		this.s16.load(function loaded() {
+			that.image = that.s16.images[index];
+		});
+	}
+
 	get image() {
 		return this._s16_image;
 	}
 
 	set image(value) {
-		console.log('Setting S16Image vlaue')
 		this._s16_image = value;
 
 		this.canvas.width = value.width;
@@ -27,6 +60,10 @@ class S16Image extends HTMLElement {
 		}
 
 		this.ctx.putImageData(value.image_data, 0, 0);
+	}
+
+	attributeChangedCallback(name, old_value, new_value) {
+		console.log('Val of', name, 'is now', new_value);
 	}
 
 	/**
