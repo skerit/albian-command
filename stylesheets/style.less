@@ -1,0 +1,191 @@
+@import "topsoil/less/topsoil.less";
+
+@color-one : #262932;
+@color-two : #3c414f;
+
+@color-main-bg: @color-one;
+@color-anchor-bg: @color-one;
+@color-sidebar-bg: @color-two;
+@color-tr-odd: @color-two;
+@color-s16col-bg: @color-two;
+
+@color-range-bg: @color-one;
+@color-range-thumb: lighten(@color-two, 10%);
+
+body {
+	min-height: 100vh;
+	background: @color-main-bg;
+	color: #ffffff;
+}
+
+a {
+	text-decoration: none;
+	color: inherit;
+}
+
+// Hide tabpages by default
+.tabpage {
+	display: none;
+}
+
+.sidebar {
+	.flexChild(0 0 16rem);
+	.flexParent(column, flex-start);
+
+	min-height: 100vh;
+	background: @color-sidebar-bg;
+
+	> * {
+		.flexChild(0 0 auto);
+		font-size: 1.3rem;
+	}
+
+	.links {
+		.flexChild(1 1);
+		.flexParent(column, flex-start);
+
+		> * {
+			.flexChild(0 0 auto);
+			padding: 1rem;
+		}
+	}
+
+	#worldname {
+		text-align: center;
+		margin: 0.5rem;
+		border-bottom: 1px solid @color-main-bg;
+		font-size: 2rem;
+	}
+
+	#worldname,
+	.bottombuttons {
+		padding: 1rem;
+	}
+
+	a {
+		font-size: 1.5rem;
+		min-width: 92%;
+
+		&:hover,
+		&.active {
+			background-color: @color-anchor-bg;
+		}
+	}
+
+	.speed {
+		margin-top: 10px;
+	}
+}
+
+.cage {
+	.flexChild(1 0 auto);
+	.flexParent();
+}
+
+.creatures-list {
+	width: 100%;
+
+	th {
+		text-align: left;
+		padding: 0 0 10px;
+	}
+
+	td.field-picture {
+		.flexParent(row, center);
+		min-width: 125px;
+		min-height: 90px;
+		align-items: center;
+	}
+
+	tbody:nth-child(odd) tr {
+		background-color: @color-tr-odd;
+	}
+
+	tbody tr:hover {
+		background-color: lighten(@color-main-bg, 15%);
+	}
+
+	tbody tr.selected {
+		background-color: lighten(@color-main-bg, 30%);
+	}
+}
+
+s16-collection {
+	.flexParent(column);
+	padding: 0.5rem;
+
+	background: @color-s16col-bg;
+	height: 14rem;
+	margin-bottom: 0.9rem;
+
+	canvas {
+		width: 100%;
+		height: 10rem;
+		object-fit: contain;
+	}
+
+	.buttons {
+		.flexParent();
+		align-items: center;
+
+		button {
+			border: none;
+			padding: 0.5rem;
+			background-color: @color-main-bg;
+		}
+	}
+}
+
+#sprites {
+	.flexParent(row);
+
+	s16-collection {
+		.flexChild(0 1 31%);
+		width: 31%;
+	}
+}
+
+main {
+	.flexChild(1 1);
+	padding: 1rem;
+}
+
+h1 {
+	color: red;
+}
+
+// Range sliders
+input[type="range"] {
+	-webkit-appearance:none;
+	width:100%;
+	height:20px;
+
+	background: @color-range-bg;
+	background-size:150px 10px;
+	background-position:center;
+	background-repeat:no-repeat;
+	overflow:hidden;
+	outline: none;
+
+	&::-webkit-slider-thumb{
+		-webkit-appearance:none;
+		width:20px;
+		height:20px;
+		background: @color-range-thumb;
+		position:relative;
+		z-index:3;
+		box-shadow:0 0 5px 0 rgba(0,0,0,0.3);
+	}
+
+	&::-webkit-slider-thumb:after{
+		content:" ";
+		width:160px;
+		height:10px;
+		position:absolute;
+		z-index:1;
+		right:20px;
+		top:5px;
+		background: @color-range-thumb;
+		background: linear-gradient(to right, #f088fc 1%, #AC6CFF 70%);
+	}
+}

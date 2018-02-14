@@ -1,0 +1,24 @@
+{
+	"name": "albian-command",
+	"description": "Get complete control over your C2 norns",
+	"version": "0.1.0",
+	"main": "index.html",
+	"window": {
+		"width": 800,
+		"height": 600,
+		"toolbar": false,
+		"position": "center",
+		"resizable": true
+	},
+	"license": "GPLv3",
+	"dependencies": {
+		"creatures": "~0.2.0",
+		"nedb": "~1.8.0"
+	},
+	"devDependencies": {
+		"less": "3.0.0"
+	},
+	"scripts": {
+		"start": "nw ."
+	}
+}

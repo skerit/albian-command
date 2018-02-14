@@ -1,0 +1,3 @@
+[submodule "stylesheets/topsoil"]
+	path = stylesheets/topsoil
+	url = git@github.com:skerit/topsoil.git

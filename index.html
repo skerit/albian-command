@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		 <meta charset="UTF-8">
+		<title>Albian Command</title>
+		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+		<style id="mainstyle">
+			body {
+				background: #262932;
+			}
+
+			body * {
+				display: none;
+			}
+		</style>
+
+		<script src="scripts/init.js"></script>
+		<script src="scripts/jquery.js"></script>
+		<script src="elements/is_visible.js"></script>
+		<script src="elements/element_appears.js"></script>
+		<script src="elements/s16_element.js"></script>
+	</head>
+	<body>
+		<div class="cage">
+			<div class="sidebar">
+				<div id="worldname">Creatures&nbsp;2</div>
+				<div class="links">
+					<a href="#creatures">Creatures</a>
+					<a href="#sprites">Sprites</a>
+				</div>
+				<div class="bottombuttons">
+					<div>
+						<span>Game speed:</span>
+						<span class="speed-value"></span>
+						<input type="range" value="10" class="speed"/>
+					</div>
+				</div>
+			</div>
+			<main>
+				<div id="creatures" class="tabpage">
+					<table class="creatures-list">
+						<thead class="creatures-thead">
+							<tr>
+								<th></th>
+								<th>Name</th>
+								<th>Age</th>
+								<th>Lifestage</th>
+								<th>Status</th>
+								<th></th>
+								<th>Drive</th>
+								<th>Moniker</th>
+							</tr>
+						</thead>
+					</table>
+				</div>
+				<div id="sprites" class="tabpage"></div>
+			</main>
+		</div>
+
+		<script src="scripts/albian_command.js"></script>
+		<script src="scripts/main.js"></script>
+	</body>
+<body>
