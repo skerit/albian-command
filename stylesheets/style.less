@@ -9,6 +9,7 @@
 @color-tr-odd: @color-two;
 @color-s16col-bg: @color-two;
 @color-context-bg: @color-two;
+@color-letter-header-bg: @color-two;
 
 @color-range-bg: @color-one;
 @color-range-thumb: lighten(@color-two, 10%);
@@ -283,5 +284,51 @@ input[type="range"] {
 	li {
 		background-color: @color-context-bg;
 		color: white;
+	}
+}
+
+.name-letter-table {
+	margin-bottom: 1rem;
+
+	.name-letter-header {
+		td {
+			background-color: @color-letter-header-bg;
+			padding: 1rem;
+			cursor: pointer;
+		}
+	}
+
+	tbody tr td {
+		padding: 1rem;
+	}
+
+	tbody tr:nth-child(even) td {
+		background-color: @color-tr-odd;
+	}
+
+	tbody, tfoot {
+		display: none;
+	}
+
+	&.active tbody,
+	&.active tfoot {
+		display: table-row-group;
+	}
+
+	a.delete {
+		color: white;
+		text-decoration: underline;
+	}
+
+	tfoot td {
+		padding: 1rem 1rem 0;
+
+		input {
+			background-color: @color-letter-header-bg;
+			border: 1px solid black;
+			height: 2.5rem;
+			width: 20rem;
+			padding: 0.5rem;
+		}
 	}
 }

@@ -60,6 +60,16 @@ ACom.setStatic(function addSetting(name, options) {
 ACom.setProperty('creatures_headers', ['picture', 'name', 'age', 'lifestage', 'status', 'n', 'drive', 'moniker']);
 
 /**
+ * The starting letters:
+ * Generate array with letters A-Z
+ *
+ * @author   Jelle De Loecker   <jelle@develry.be>
+ * @since    0.1.0
+ * @version  0.1.0
+ */
+ACom.setProperty('letters', Array.range(65, 91).map(function(v) {return String.fromCharCode(v)}));
+
+/**
  * The name of the current world
  *
  * @author   Jelle De Loecker   <jelle@develry.be>
@@ -127,6 +137,87 @@ ACom.setProperty(function speed() {
 	if (this._speed != null) {
 		this.capp.setSpeed(send_value);
 	}
+});
+
+/**
+ * Initialize the app
+ *
+ * @author   Jelle De Loecker   <jelle@develry.be>
+ * @since    0.1.0
+ * @version  0.1.0
+ */
+ACom.setMethod(function init() {
+
+	var that = this;
+
+	this.doAsyncInit();
+
+	// Load the world name
+	this.getWorldName();
+
+	// Load in the creatures
+	this.getCreatures();
+
+	// Listen to speed range changes
+	this.$speed.on('input', Function.throttle(function onChange(e) {
+		var new_value = this.value / 10;
+		that.speed = new_value;
+	}, 400));
+
+	this.$sidelinks.on('click', function onClick(e) {
+
+		var target_id = this.getAttribute('href'),
+		    target    = document.querySelector(target_id),
+		    cbname;
+
+		// Remove the active class from all sidebar links
+		$sidelinks.removeClass('active');
+
+		// Add active class to the clicked link
+		$(this).addClass('active');
+
+		// Hide all tabs
+		$tabs.hide();
+
+		// Show the target
+		$(target).show();
+
+		// Possible callback name
+		cbname = 'load' + target.id.camelize() + 'Tab';
+
+		if (typeof that[cbname] == 'function') {
+			that[cbname](target);
+		}
+
+		e.preventDefault();
+	});
+
+	setInterval(function doUpdate() {
+		that.update();
+	}, 15000);
+});
+
+/**
+ * Do an update
+ *
+ * @author   Jelle De Loecker   <jelle@develry.be>
+ * @since    0.1.0
+ * @version  0.1.0
+ */
+ACom.setMethod(function update(callback) {
+
+	var that = this;
+
+	if (!callback) {
+		callback = Function.thrower;
+	}
+
+	this.emit('updating', function doUpdate() {
+
+		that.getCreatures();
+
+		that.emit('updated');
+	});
 });
 
 /**
@@ -332,60 +423,6 @@ ACom.setMethod(function getFavouriteLocations(callback) {
 });
 
 /**
- * Initialize the app
- *
- * @author   Jelle De Loecker   <jelle@develry.be>
- * @since    0.1.0
- * @version  0.1.0
- */
-ACom.setMethod(function init() {
-
-	var that = this;
-
-	this.doAsyncInit();
-
-	// Load the world name
-	this.getWorldName();
-
-	// Load in the creatures
-	this.getCreatures();
-
-	// Listen to speed range changes
-	this.$speed.on('input', Function.throttle(function onChange(e) {
-		var new_value = this.value / 10;
-		that.speed = new_value;
-	}, 400));
-
-	this.$sidelinks.on('click', function onClick(e) {
-
-		var target_id = this.getAttribute('href'),
-		    target    = document.querySelector(target_id),
-		    cbname;
-
-		// Remove the active class from all sidebar links
-		$sidelinks.removeClass('active');
-
-		// Add active class to the clicked link
-		$(this).addClass('active');
-
-		// Hide all tabs
-		$tabs.hide();
-
-		// Show the target
-		$(target).show();
-
-		// Possible callback name
-		cbname = 'load' + target.id.camelize() + 'Tab';
-
-		if (typeof that[cbname] == 'function') {
-			that[cbname](target);
-		}
-
-		e.preventDefault();
-	});
-});
-
-/**
  * Initialize the asynchronous side of the app
  *
  * @author   Jelle De Loecker   <jelle@develry.be>
@@ -395,7 +432,11 @@ ACom.setMethod(function init() {
 ACom.setCacheMethod(function doAsyncInit() {
 
 	var that = this,
-	    Setting = this.getDatabase('settings');
+	    Setting = this.getDatabase('settings'),
+	    Name = this.getDatabase('names');
+
+	this.all_names = {};
+	this.lower_names = [];
 
 	Function.series(function getSettings(next) {
 		Setting.find({key: 'settings'}, function gotSettings(err, docs) {
@@ -425,6 +466,25 @@ ACom.setCacheMethod(function doAsyncInit() {
 			}
 
 			that.settings_doc = doc;
+			next();
+		});
+	}, function loadNames(next) {
+
+		that.letters.forEach(function eachLetter(letter) {
+			that.all_names[letter] = [];
+		});
+
+		Name.find({}, function gotAllNames(err, docs) {
+
+			if (err) {
+				return next(err);
+			}
+
+			docs.forEach(function eachDoc(doc) {
+				that.all_names[doc.letter].push(doc);
+				that.lower_names.push(doc.name.toLowerCase());
+			});
+
 			next();
 		});
 	}, function done(err) {
@@ -538,6 +598,236 @@ ACom.setAfterMethod('ready', function loadSettingsTab(settings_element) {
 		});
 
 		console.log('Load setting', key, config);
+	});
+});
+
+/**
+ * Look for a name
+ *
+ * @author   Jelle De Loecker   <jelle@develry.be>
+ * @since    0.1.0
+ * @version  0.1.0
+ */
+ACom.setMethod(function getName(name) {
+
+	var lower_name,
+	    letter,
+	    result,
+	    key,
+	    i;
+
+	name = name.trim();
+	lower_name = name.toLowerCase();
+
+	if (this.lower_names.indexOf(lower_name) == -1) {
+		return;
+	}
+
+	letter = name[0].toUpperCase();
+
+	if (this.all_names[letter]) {
+		result = this.all_names[letter].findByPath('name', name);
+
+		if (result) {
+			return result;
+		}
+	}
+
+	for (i = 0; i < this.all_names[letter].length; i++) {
+		key = this.all_names[letter][i].name;
+
+		if (key.toLowerCase() == lower_name) {
+			return this.all_names[letter][i];
+		}
+	}
+});
+
+/**
+ * Add a new name
+ *
+ * @author   Jelle De Loecker   <jelle@develry.be>
+ * @since    0.1.0
+ * @version  0.1.0
+ */
+ACom.setMethod(function addName(name) {
+
+	var existing_name,
+	    new_doc,
+	    letter;
+
+	name = name.trim();
+
+	existing_name = this.getName(name);
+
+	if (existing_name) {
+		return false;
+	}
+
+	letter = name[0].toUpperCase();
+
+	new_doc = {
+		letter : letter,
+		name   : name
+	};
+
+	this.all_names[letter].push(new_doc);
+	this.lower_names.push(name.toLowerCase());
+
+	this.getDatabase('names').insert(new_doc, function gotNewDoc(err, saved_doc) {
+
+		if (err) {
+			throw err;
+		}
+
+		new_doc._id = saved_doc._id;
+	});
+
+	return new_doc;
+});
+
+/**
+ * Remove a name
+ *
+ * @author   Jelle De Loecker   <jelle@develry.be>
+ * @since    0.1.0
+ * @version  0.1.0
+ */
+ACom.setMethod(function removeName(name) {
+
+	var letter,
+	    doc,
+	    i;
+
+	name = name.trim();
+	letter = name[0].toUpperCase();
+
+	if (!letter) {
+		return;
+	}
+
+	// Get the name document
+	doc = this.getName(name);
+
+	if (!doc) {
+		return false;
+	}
+
+	this.getDatabase('names').remove({_id: doc._id});
+
+	for (i = 0; i < this.all_names[letter].length; i++) {
+		if (this.all_names[letter][i].name == name) {
+			this.all_names[letter].splice(i, 1);
+			return true;
+		}
+	}
+});
+
+/**
+ * Load the names tab
+ *
+ * @author   Jelle De Loecker   <jelle@develry.be>
+ * @since    0.1.0
+ * @version  0.1.0
+ */
+ACom.setAfterMethod('ready', function loadNamesTab(names_element) {
+
+	var that = this,
+	    $this = $(names_element),
+	    letters = this.letters;
+
+	// Clear the names element
+	$this.html('');
+
+	letters.forEach(function eachLetter(letter) {
+		var $table,
+		    $tbody,
+		    names = that.all_names[letter],
+		    html;
+
+		html = `<table class="name-letter-table" data-letter="${letter}">
+			<thead class="name-letter-header">
+				<tr>
+					<td colspan=3>${letter} (${names.length})</td>
+				</tr>
+			</thead>
+			<tbody></tbody>
+			<tfoot>
+				<tr>
+					<td colspan=3>
+						<input type="text" placeholder="Add new name ...">
+					</td>
+				</tr>
+			</tfoot>
+		`;
+
+		html += '</table>';
+
+		// Parse the html
+		$table = $(html);
+		$tbody = $('tbody', $table);
+		recreateTbody();
+
+		function recreateTbody() {
+
+			// Clear the tbody
+			$tbody.html('');
+
+			names.sortByPath(-1, 'name');
+
+			names.forEach(function eachName(doc) {
+				var $row,
+				    html;
+
+				html = `
+					<tr>
+						<td>${doc.name}</td>
+						<td></td>
+						<td><a href="#" class="delete">Delete</a></td>
+					</tr>
+				`;
+
+				$row = $(html);
+
+				$tbody.append($row);
+
+				$('.delete', $row).on('click', function onClick(e) {
+
+					if (!doc._id) {
+						return;
+					}
+
+					$row.remove();
+					that.removeName(doc.name);
+				});
+			});
+		}
+
+		// Add to the element
+		$this.append($table);
+
+		$('thead', $table).on('click', function onClick(e) {
+			$('.name-letter-table').removeClass('active');
+			$table.addClass('active');
+		});
+
+		$('input', $table).on('keyup', function onPress(e) {
+
+			var result;
+
+			if (e.keyCode == 13 && this.value) {
+				result = that.addName(this.value);
+				this.value = '';
+
+				if (result) {
+					if (result.letter != letter) {
+						loadNamesTab.call(that, names_element);
+						$('table[data-letter="' + result.letter + '"]').addClass('active');
+					} else {
+						recreateTbody();
+					}
+				}
+			}
+		});
 	});
 });
 
