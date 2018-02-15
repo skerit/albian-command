@@ -19,6 +19,7 @@ callgrind*
 # Ignore node modules
 /node_modules/
 files/
+temp/
 
 # Ignore test files
 scratch*

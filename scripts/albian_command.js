@@ -108,8 +108,10 @@ ACom.setProperty(function world_name() {
  * @version  0.1.0
  */
 ACom.setProperty(function speed() {
-	return this._speed;
+	return this._speed / 2;
 }, function setSpeed(value) {
+
+	var send_value = value * 2;
 
 	// Remember the speed
 	this._speed = value;
@@ -119,7 +121,7 @@ ACom.setProperty(function speed() {
 
 	// And change the game speed (but not on the initial value)
 	if (this._speed != null) {
-		this.capp.setSpeed(value);
+		this.capp.setSpeed(send_value);
 	}
 });
 
@@ -266,7 +268,8 @@ ACom.setMethod(function init() {
 
 	// Listen to speed range changes
 	this.$speed.on('input', Function.throttle(function onChange(e) {
-		that.speed = this.value / 10;
+		var new_value = this.value / 10;
+		that.speed = new_value;
 	}, 400));
 
 	this.$sidelinks.on('click', function onClick(e) {
