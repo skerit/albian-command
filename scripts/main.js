@@ -6,7 +6,13 @@ var $list_body  = $('.creatures-tbody'),
 // Create the Albian Command class instance
 acom = new Blast.Classes.Develry.Creatures.AlbianCommand();
 
-
+$.contextMenu({
+	selector: '.action[data-action="Teleport"]',
+	trigger: 'none',
+	build: function buildMenu($trigger, e) {
+		return $trigger[0].teleport_menu;
+	}
+});
 
 /**
  * Create and return a canvas where the creature's head will go

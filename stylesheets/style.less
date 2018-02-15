@@ -8,6 +8,7 @@
 @color-sidebar-bg: @color-two;
 @color-tr-odd: @color-two;
 @color-s16col-bg: @color-two;
+@color-context-bg: @color-two;
 
 @color-range-bg: @color-one;
 @color-range-thumb: lighten(@color-two, 10%);
@@ -151,11 +152,13 @@ table {
 }
 
 .actions-row {
-	.flexParent();
-	padding: 1rem;
+	td {
+		padding: 1rem;
+	}
 
 	.action {
 		background-color: @color-two;
+		display: inline-block;
 	}
 }
 
@@ -164,6 +167,24 @@ table {
 	padding: 1rem;
 	cursor: pointer;
 	text-align: center;
+	height: 10rem;
+	width: 11rem;
+
+	s16-image {
+		.flexChild(1 1);
+		.flexParent(row, center);
+		align-self: center;
+		height: 6rem;
+	}
+
+	span {
+		display: inline-block;
+		margin-top: 1rem;
+	}
+}
+
+.action:not(:last-child) {
+	margin-right: 1rem;
 }
 
 s16-collection {
@@ -189,6 +210,15 @@ s16-collection {
 			padding: 0.5rem;
 			background-color: @color-main-bg;
 		}
+	}
+}
+
+s16-image {
+	canvas {
+		max-width: 100%;
+		max-height: 100%;
+		object-fit: contain;
+		width: auto;
 	}
 }
 
@@ -243,5 +273,15 @@ input[type="range"] {
 		top:5px;
 		background: @color-range-thumb;
 		background: linear-gradient(to right, #f088fc 1%, #AC6CFF 70%);
+	}
+}
+
+.context-menu-list {
+	background: @color-context-bg;
+	border: 1px solid black;
+
+	li {
+		background-color: @color-context-bg;
+		color: white;
 	}
 }

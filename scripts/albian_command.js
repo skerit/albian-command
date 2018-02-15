@@ -70,7 +70,8 @@ ACom.prepareProperty(function creature_options_row() {
 
 	var row = document.createElement('tr'),
 	    column = document.createElement('td'),
-	    pick_up;
+	    pick_up,
+	    teleport;
 
 	// Indicate this is the actions row
 	row.classList.add('actions-row');
@@ -82,6 +83,9 @@ ACom.prepareProperty(function creature_options_row() {
 	pick_up.dataset.click_image_index = 6;
 
 	column.appendChild(pick_up);
+
+	teleport = this.createActionElement('Teleport', 'tele.s16');
+	column.appendChild(teleport);
 
 	return row;
 });
@@ -178,6 +182,7 @@ ACom.setMethod(function createActionElement(title, s16_name, index) {
 	wrapper_el.appendChild(s16_el);
 	wrapper_el.appendChild(title_el);
 	wrapper_el.classList.add('action');
+	wrapper_el.setAttribute('data-action', title);
 
 	if (index == null) {
 		index = 0;
@@ -208,9 +213,11 @@ ACom.setMethod(function createActionElement(title, s16_name, index) {
 						throw err;
 					}
 
+					wrapper_el.creature = creature;
 					that[method_name](wrapper_el, creature);
 				});
 			} else {
+				wrapper_el.creature = null;
 				that[method_name](wrapper_el);
 			}
 		}
@@ -245,6 +252,83 @@ ACom.setMethod(function doPickupAction(action_element, creature) {
 		{type: 'c2window'},
 		{type: 'activatewindow'}
 	]);
+});
+
+/**
+ * Teleport the given creature:
+ * show a contextmenu first
+ *
+ * @author   Jelle De Loecker   <jelle@develry.be>
+ * @since    0.1.0
+ * @version  0.1.0
+ */
+ACom.setMethod(function doTeleportAction(action_element, creature) {
+
+	var that = this,
+	    $this = $(action_element);
+
+	this.getFavouriteLocations(function gotLocations(err, locations) {
+
+		var offset,
+		    result,
+		    items,
+		    conf,
+		    key;
+
+		if (err) {
+			return alert('Error: ' + err);
+		}
+
+		result = {};
+		items = {};
+
+		for (key in locations) {
+			items[key] = {
+				name : key
+			};
+		};
+
+		result.callback = function onClick(key, options) {
+			var loc = locations[key];
+
+			creature.move(loc.x, loc.y, function done(err) {
+				console.log('Moved creature?', err);
+			})
+
+			console.log('Clicked on', loc);
+		}
+
+		result.items = items;
+		offset = $this.offset();
+
+		action_element.teleport_menu = result;
+
+		$this.contextMenu({
+			x: offset.left,
+			y: offset.top
+		});
+	});
+});
+
+/**
+ * Get favourite locations in the current world
+ *
+ * @author   Jelle De Loecker   <jelle@develry.be>
+ * @since    0.1.0
+ * @version  0.1.0
+ */
+ACom.setMethod(function getFavouriteLocations(callback) {
+
+	var that = this;
+
+	this.capp.getWorld(function gotWorld(err, world) {
+
+		if (err) {
+			return callback(err);
+		}
+
+		callback(null, world.locations);
+	});
 });
 
 /**
