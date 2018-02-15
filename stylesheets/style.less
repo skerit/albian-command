@@ -16,6 +16,7 @@ body {
 	min-height: 100vh;
 	background: @color-main-bg;
 	color: #ffffff;
+	overflow: hidden;
 }
 
 main {
@@ -88,19 +89,6 @@ a {
 }
 
 .creatures-list {
-	width: 100%;
-
-	th {
-		text-align: left;
-		padding: 0 0 10px;
-	}
-
-	td.field-picture {
-		.flexParent(row, center);
-		min-width: 125px;
-		min-height: 90px;
-		align-items: center;
-	}
 
 	tbody:nth-child(odd) tr {
 		background-color: @color-tr-odd;
@@ -116,6 +104,49 @@ a {
 
 	tbody tr.selected {
 		background-color: lighten(@color-main-bg, 30%);
+	}
+
+	td.field-picture {
+		.flexParent(row, center);
+		min-width: 125px;
+		min-height: 90px;
+		align-items: center;
+	}
+}
+
+table {
+	width: 100%;
+
+	th {
+		text-align: left;
+		padding: 0 0 10px;
+	}
+}
+
+#settings table {
+	tbody tr:nth-child(odd) {
+		background-color: @color-tr-odd;
+
+		.action {
+			background-color: @color-main-bg;
+		}
+	}
+
+	tbody tr:hover {
+		background-color: lighten(@color-main-bg, 15%);
+	}
+
+	tbody tr.selected {
+		background-color: lighten(@color-main-bg, 30%);
+	}
+
+	tbody td {
+
+		> * {
+			display: inline-block;
+			vertical-align: middle;
+			padding: 0.5rem;
+		}
 	}
 }
 

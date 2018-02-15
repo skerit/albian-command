@@ -35,6 +35,22 @@ var ACom = Function.inherits('Develry.Creatures.Base', function AlbianCommand() 
 });
 
 /**
+ * Add a possible setting
+ *
+ * @author   Jelle De Loecker   <jelle@develry.be>
+ * @since    0.1.0
+ * @version  0.1.0
+ */
+ACom.setStatic(function addSetting(name, options) {
+
+	if (!this.settings) {
+		this.settings = {};
+	}
+
+	this.settings[name] = options;
+});
+
+/**
  * The name of the current world
  *
  * @author   Jelle De Loecker   <jelle@develry.be>
@@ -105,6 +121,30 @@ ACom.setProperty(function speed() {
 	if (this._speed != null) {
 		this.capp.setSpeed(value);
 	}
+});
+
+/**
+ * Get a database
+ *
+ * @author   Jelle De Loecker   <jelle@develry.be>
+ * @since    0.1.0
+ * @version  0.1.0
+ */
+ACom.setMethod(function getDatabase(name) {
+
+	if (!this.dbs) {
+		this.dbs = {};
+	}
+
+	if (!this.dbs[name]) {
+
+		this.dbs[name] = new NeDB({
+			filename : libpath.join(require('nw.gui').App.dataPath, name + '.db'),
+			autoload : true
+		});
+	}
+
+	return this.dbs[name];
 });
 
 /**
@@ -216,6 +256,8 @@ ACom.setMethod(function init() {
 
 	var that = this;
 
+	this.doAsyncInit();
+
 	// Load the world name
 	this.getWorldName();
 
@@ -257,13 +299,169 @@ ACom.setMethod(function init() {
 });
 
 /**
+ * Initialize the asynchronous side of the app
+ *
+ * @author   Jelle De Loecker   <jelle@develry.be>
+ * @since    0.1.0
+ * @version  0.1.0
+ */
+ACom.setCacheMethod(function doAsyncInit() {
+
+	var that = this,
+	    Setting = this.getDatabase('settings');
+
+	Function.series(function getSettings(next) {
+		Setting.find({key: 'settings'}, function gotSettings(err, docs) {
+
+			var doc;
+
+			if (err) {
+				return next(err);
+			}
+
+			doc = docs[0];
+
+			if (!doc) {
+				doc = {
+					key: 'settings'
+				};
+
+				return Setting.insert(doc, function saved(err, new_doc) {
+
+					if (err) {
+						return next(err);
+					}
+
+					that.settings_doc = new_doc;
+					next();
+				});
+			}
+
+			that.settings_doc = doc;
+			next();
+		});
+	}, function done(err) {
+
+		if (err) {
+			throw err;
+		}
+
+		that.emit('ready');
+	});
+});
+
+/**
+ * Set a specific setting
+ *
+ * @author   Jelle De Loecker   <jelle@develry.be>
+ * @since    0.1.0
+ * @version  0.1.0
+ */
+ACom.setMethod(function setSetting(name, value) {
+	this.settings_doc[name] = value;
+	this.getDatabase('settings').update({key: 'settings'}, this.settings_doc);
+});
+
+/**
+ * Get a specific setting, can only be called after ready
+ *
+ * @author   Jelle De Loecker   <jelle@develry.be>
+ * @since    0.1.0
+ * @version  0.1.0
+ */
+ACom.setMethod(function getSetting(name) {
+	return this.settings_doc[name];
+});
+
+/**
+ * Load the settings tab
+ *
+ * @author   Jelle De Loecker   <jelle@develry.be>
+ * @since    0.1.0
+ * @version  0.1.0
+ */
+ACom.setAfterMethod('ready', function loadSettingsTab(settings_element) {
+
+	var that = this,
+	    config,
+	    tbody,
+	    key;
+
+	tbody = settings_element.querySelector('tbody');
+	tbody.innerHTML = '';
+
+	Object.each(ACom.settings, function eachSetting(config, key) {
+
+		var valwrap,
+		    element,
+		    name_td,
+		    val_td,
+		    value,
+		    label,
+		    row;
+
+		row = document.createElement('tr');
+		name_td = document.createElement('td');
+		val_td = document.createElement('td');
+		label = document.createElement('label');
+		label.setAttribute('for', key);
+		valwrap = document.createElement('label');
+		valwrap.classList.add('valwrap');
+
+		row.appendChild(name_td);
+		row.appendChild(val_td);
+		tbody.appendChild(row);
+
+		name_td.appendChild(label);
+		label.textContent = config.title;
+
+		// Get the current value
+		value = that.getSetting(key);
+
+		switch (config.type) {
+			case 'boolean':
+				element = document.createElement('input');
+				element.setAttribute('type', 'checkbox');
+				element.checked = value;
+				break;
+
+			default:
+				element = document.createElement('input');
+				element.value = value;
+		}
+
+		element.id = key;
+		element.setAttribute('name', key);
+		valwrap.appendChild(element);
+		val_td.appendChild(valwrap);
+
+		element.addEventListener('change', function onChange(e) {
+
+			var value;
+
+			if (config.type == 'boolean') {
+				value = this.checked;
+			} else {
+				value = this.value;
+			}
+
+			console.log('Change!', value, 'saving', key);
+
+			that.setSetting(key, value);
+		});
+
+		console.log('Load setting', key, config);
+	});
+});
+
+/**
  * Load the sprites tab
  *
  * @author   Jelle De Loecker   <jelle@develry.be>
  * @since    0.1.0
  * @version  0.1.0
  */
-ACom.setMethod(function loadSpritesTab(sprites_element) {
+ACom.setAfterMethod('ready', function loadSpritesTab(sprites_element) {
 
 	var that = this,
 	    sprites_path = libpath.resolve(this.capp.process_path, '..', 'Images'),
@@ -319,7 +517,7 @@ ACom.setMethod(function loadSpritesTab(sprites_element) {
  * @since    0.1.0
  * @version  0.1.0
  */
-ACom.setMethod(function getWorldName(callback) {
+ACom.setAfterMethod('ready', function getWorldName(callback) {
 
 	var that = this;
 
@@ -345,7 +543,7 @@ ACom.setMethod(function getWorldName(callback) {
  * @since    0.1.0
  * @version  0.1.0
  */
-ACom.setMethod(function getCreatures(callback) {
+ACom.setAfterMethod('ready', function getCreatures(callback) {
 
 	var that = this;
 
@@ -463,3 +661,8 @@ ACom.setMethod(function _initCreature(creature, callback) {
 		els.lifestage.textContent = creature.lifestage;
 	}
 });
+
+ACom.addSetting('name_creatures', {
+	title: 'Automatically name new creatures',
+	type : 'boolean'
+})
