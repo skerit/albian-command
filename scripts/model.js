@@ -32,6 +32,78 @@ var Model = Function.inherits('Develry.Creatures.Base', function Model(acom, nam
 });
 
 /**
+ * Set the model name
+ *
+ * @author   Jelle De Loecker   <jelle@develry.be>
+ * @since    0.1.0
+ * @version  0.1.0
+ */
+Model.constitute(function setNames() {
+
+	var name = this.name.before('Model');
+
+	if (!name) {
+		return;
+	}
+
+	this.model_name = name;
+});
+
+/**
+ * Get a record class
+ *
+ * @author   Jelle De Loecker   <jelle@develry.be>
+ * @since    0.1.0
+ * @version  0.1.0
+ */
+Model.setStatic(function getRecordClass(name) {
+
+	var record_name,
+	    temp;
+
+	if (this.name != 'Model' && this._record_class) {
+		return this._record_class;
+	}
+
+	if (!name) {
+		name = this.model_name;
+	}
+
+	if (!name) {
+		return Blast.Classes.Develry.Creatures.Record;
+	}
+
+	record_name = name.singularize().camelize() + 'Record';
+
+	if (!Blast.Classes.Develry.Creatures[record_name]) {
+		temp = Function.inherits('Develry.Creatures.Record', Function.create(record_name, function wrapper(model, data) {
+			wrapper.wrapper.super.call(this, model, data);
+		}));
+	}
+
+	if (this.name != 'Model' && this.name == name) {
+		this._record_class = Blast.Classes.Develry.Creatures[record_name];
+	}
+
+	return Blast.Classes.Develry.Creatures[record_name];
+});
+
+/**
+ * Add a field
+ *
+ * @author   Jelle De Loecker   <jelle@develry.be>
+ * @since    0.1.0
+ * @version  0.1.0
+ */
+Model.setStatic(function addField(name) {
+
+	console.log('model_name = ', this.model_name);
+
+	var doc_class = this.getRecordClass(this.model_name);
+	doc_class.addField(name);
+});
+
+/**
  * Find
  *
  * @author   Jelle De Loecker   <jelle@develry.be>
@@ -115,7 +187,8 @@ Model.setMethod(function remove(query, callback) {
  */
 Model.setMethod(function createRecord(data) {
 
-	var result;
+	var RecordClass = this.constructor.getRecordClass(),
+	    result;
 
 	if (!data) {
 		data = {};
@@ -125,7 +198,7 @@ Model.setMethod(function createRecord(data) {
 		data._id = createObjectId();
 	}
 
-	result = new Blast.Classes.Develry.Creatures.Record(this, data);
+	result = new RecordClass(this, data);
 	this.cache[data._id] = result;
 
 	return result;

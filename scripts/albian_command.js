@@ -434,6 +434,13 @@ ACom.setMethod(function getFavouriteLocations(callback) {
  * @version  0.1.0
  */
 ACom.setMethod(function getModel(name) {
+
+	var model_name = name.singularize().camelize() + 'Model';
+
+	if (Blast.Classes.Develry.Creatures[model_name]) {
+		return new Blast.Classes.Develry.Creatures[model_name](this);
+	}
+
 	return new Blast.Classes.Develry.Creatures.Model(this, name);
 });
 
@@ -481,16 +488,14 @@ ACom.setCacheMethod(function doAsyncInit() {
 				return next(err);
 			}
 
-			console.log('All names:', docs);
-
 			docs.forEach(function eachDoc(doc) {
 
-				if (!doc.get('letter')) {
+				if (!doc.letter) {
 					return;
 				}
 
-				that.all_names[doc.get('letter')].push(doc);
-				that.lower_names.push(doc.get('name').toLowerCase());
+				that.all_names[doc.letter].push(doc);
+				that.lower_names.push(doc.name.toLowerCase());
 			});
 
 			next();
@@ -642,7 +647,7 @@ ACom.setMethod(function getName(name) {
 	}
 
 	for (i = 0; i < this.all_names[letter].length; i++) {
-		key = this.all_names[letter][i].get('name');
+		key = this.all_names[letter][i].name;
 
 		if (key.toLowerCase() == lower_name) {
 			return this.all_names[letter][i];
@@ -803,7 +808,7 @@ ACom.setAfterMethod('ready', function loadNamesTab(names_element) {
 
 				html = `
 					<tr>
-						<td>${doc.get('name')}</td>
+						<td>${doc.name}</td>
 						<td>
 							<s16-image
 								s16="Omelette.s16"
@@ -834,13 +839,13 @@ ACom.setAfterMethod('ready', function loadNamesTab(names_element) {
 					$female.removeClass('inactive');
 				}
 
-				$female[0].paused = !doc.get('female');
+				$female[0].paused = !doc.female;
 
-				if (doc.get('male')) {
+				if (doc.male) {
 					$male.removeClass('inactive');
 				}
 
-				$male[0].paused = !doc.get('male');
+				$male[0].paused = !doc.male;
 
 				$tbody.append($row);
 
@@ -848,7 +853,7 @@ ACom.setAfterMethod('ready', function loadNamesTab(names_element) {
 					// Enable or disable inactive class
 					$female.toggleClass('inactive');
 					doc.set('female', !$female.hasClass('inactive'));
-					$female[0].paused = !doc.get('female');
+					$female[0].paused = !doc.female;
 					that.updateName(doc);
 				});
 
@@ -856,7 +861,7 @@ ACom.setAfterMethod('ready', function loadNamesTab(names_element) {
 					// Enable or disable inactive class
 					$male.toggleClass('inactive');
 					doc.set('male', !$male.hasClass('inactive'));
-					$male[0].paused = !doc.get('male');
+					$male[0].paused = !doc.male;
 					that.updateName(doc);
 				});
 
@@ -867,7 +872,7 @@ ACom.setAfterMethod('ready', function loadNamesTab(names_element) {
 					}
 
 					$row.remove();
-					that.removeName(doc.get('name'));
+					that.removeName(doc.name);
 				});
 			});
 		}

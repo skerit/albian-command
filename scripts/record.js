@@ -26,6 +26,23 @@ Record.setProperty(function _id() {
 });
 
 /**
+ * Add a field
+ *
+ * @author   Jelle De Loecker   <jelle@develry.be>
+ * @since    0.1.0
+ * @version  0.1.0
+ */
+Record.setStatic(function addField(name) {
+	console.log('Setting property', name, 'on', this);
+
+	this.setProperty(name, function getter() {
+		return this.get(name)
+	}, function setter(value) {
+		return this.set(name, value);
+	});
+});
+
+/**
  * Update from the database
  *
  * @author   Jelle De Loecker   <jelle@develry.be>
