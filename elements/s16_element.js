@@ -11,7 +11,11 @@
 class S16Image extends HTMLElement {
 
 	/**
-	 * S16 value getter
+	 * S16 value getter: the name of the s16 file
+	 *
+	 * @author   Jelle De Loecker   <jelle@develry.be>
+	 * @since    0.1.0
+	 * @version  0.1.0
 	 */
 	get s16() {
 
@@ -20,11 +24,16 @@ class S16Image extends HTMLElement {
 			this._s16 = this.getAttribute('s16');
 		}
 
-		console.log('S16 is', this._s16)
-
 		return this._s16;
 	}
 
+	/**
+	 * S16 value getter: set the name of the s16 file
+	 *
+	 * @author   Jelle De Loecker   <jelle@develry.be>
+	 * @since    0.1.0
+	 * @version  0.1.0
+	 */
 	set s16(value) {
 
 		if (typeof value == 'string') {
@@ -39,13 +48,27 @@ class S16Image extends HTMLElement {
 		}
 	}
 
+	/**
+	 * The index of the image to show in the s16 file
+	 *
+	 * @author   Jelle De Loecker   <jelle@develry.be>
+	 * @since    0.1.0
+	 * @version  0.1.0
+	 */
 	get image_index() {
 		return this._image_index;
 	}
 
+	/**
+	 * Set the index of the image to show in the s16 file
+	 *
+	 * @author   Jelle De Loecker   <jelle@develry.be>
+	 * @since    0.1.0
+	 * @version  0.1.0
+	 */
 	set image_index(index) {
 		var that = this;
-		this._image_index = index;
+		this._image_index = Number(index);
 
 		if (!this.s16) {
 			return;
@@ -56,10 +79,24 @@ class S16Image extends HTMLElement {
 		});
 	}
 
+	/**
+	 * The actual s16 instance
+	 *
+	 * @author   Jelle De Loecker   <jelle@develry.be>
+	 * @since    0.1.0
+	 * @version  0.1.0
+	 */
 	get image() {
 		return this._s16_image;
 	}
 
+	/**
+	 * Set the actual s16 instance
+	 *
+	 * @author   Jelle De Loecker   <jelle@develry.be>
+	 * @since    0.1.0
+	 * @version  0.1.0
+	 */
 	set image(value) {
 		this._s16_image = value;
 
@@ -72,6 +109,60 @@ class S16Image extends HTMLElement {
 		}
 
 		this.ctx.putImageData(value.image_data, 0, 0);
+
+		if (this._animation_interval == null) {
+			this.startAnimation();
+		}
+	}
+
+	/**
+	 * The animation duration, if any
+	 *
+	 * @author   Jelle De Loecker   <jelle@develry.be>
+	 * @since    0.1.0
+	 * @version  0.1.0
+	 */
+	get animation_duration() {
+		return Number(this.getAttribute('animation-duration'));
+	}
+
+	/**
+	 * Is the animation paused?
+	 *
+	 * @author   Jelle De Loecker   <jelle@develry.be>
+	 * @since    0.1.0
+	 * @version  0.1.0
+	 */
+	get paused() {
+		if (this._paused != null) {
+			return this._paused;
+		}
+
+		this._paused = this.hasAttribute('paused');
+		return this._paused;
+	}
+
+	/**
+	 * Pause the animation?
+	 *
+	 * @author   Jelle De Loecker   <jelle@develry.be>
+	 * @since    0.1.0
+	 * @version  0.1.0
+	 */
+	set paused(value) {
+		this._paused = value;
+	}
+
+	/**
+	 * Set the animation duration, if any
+	 *
+	 * @author   Jelle De Loecker   <jelle@develry.be>
+	 * @since    0.1.0
+	 * @version  0.1.0
+	 */
+	set animation_duration(value) {
+		this.setAttribute('animation-duration', value);
+		this.startAnimation();
 	}
 
 	attributeChangedCallback(name, old_value, new_value) {
@@ -79,6 +170,8 @@ class S16Image extends HTMLElement {
 			this.s16 = new_value;
 		} else if (name == 'image-index') {
 			this.image_index = new_value;
+		} else if (name == 'paused') {
+			this.paused = new_value;
 		}
 	}
 
@@ -111,6 +204,74 @@ class S16Image extends HTMLElement {
 		}
 
 		this.appendChild(this.canvas);
+	}
+
+	/**
+	 * Element was removed, detach timers
+	 *
+	 * @author   Jelle De Loecker   <jelle@develry.be>
+	 * @since    0.1.0
+	 * @version  0.1.0
+	 */
+	detachedCallback() {
+		if (this._animation_interval != null) {
+			clearInterval(this._animation_interval);
+			this._animation_interval = null;
+		}
+	}
+
+	/**
+	 * Possibly start the animation
+	 *
+	 * @author   Jelle De Loecker   <jelle@develry.be>
+	 * @since    0.1.0
+	 * @version  0.1.0
+	 */
+	startAnimation() {
+
+		var that = this,
+		    duration = this.animation_duration,
+		    increment,
+		    start,
+		    fps,
+		    cur;
+
+		if (!duration) {
+			if (this._animation_interval != null) {
+				clearInterval(this._animation_interval);
+				this._animation_interval = null;
+			}
+			return;
+		}
+
+		increment = Number(this.getAttribute('animation-increment')) || 1;
+		fps = Number(this.getAttribute('animation-fps')) || 8;
+		start = this.image_index;
+		cur = 0;
+
+		if (fps > 25) {
+			fps = 25;
+		}
+
+		this._animation_interval = setInterval(function updateImage() {
+
+			if (that.paused) {
+				return;
+			}
+
+			// Increment the current counter
+			cur += increment;
+
+			if (cur >= duration) {
+				cur = 0;
+			}
+
+			if (cur < 0) {
+				cur = duration - 1;
+			}
+
+			that.image_index = start + cur;
+		}, 1000 / fps);
 	}
 }
 

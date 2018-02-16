@@ -807,6 +807,8 @@ ACom.setAfterMethod('ready', function loadNamesTab(names_element) {
 							<s16-image
 								s16="Omelette.s16"
 								image-index="38"
+								animation-duration="16"
+								animation-increment="-1"
 								class="gender female inactive"
 								title="Female"
 							></s16-image>
@@ -814,6 +816,7 @@ ACom.setAfterMethod('ready', function loadNamesTab(names_element) {
 							<s16-image
 								s16="Omelette.s16"
 								image-index="54"
+								animation-duration="16"
 								class="gender male inactive"
 								title="Male"
 							></s16-image>
@@ -830,9 +833,13 @@ ACom.setAfterMethod('ready', function loadNamesTab(names_element) {
 					$female.removeClass('inactive');
 				}
 
+				$female[0].paused = !doc.female;
+
 				if (doc.male) {
 					$male.removeClass('inactive');
 				}
+
+				$male[0].paused = !doc.male;
 
 				$tbody.append($row);
 
@@ -840,6 +847,7 @@ ACom.setAfterMethod('ready', function loadNamesTab(names_element) {
 					// Enable or disable inactive class
 					$female.toggleClass('inactive');
 					doc.female = !$female.hasClass('inactive');
+					$female[0].paused = !doc.female;
 					that.updateName(doc);
 				});
 
@@ -847,6 +855,7 @@ ACom.setAfterMethod('ready', function loadNamesTab(names_element) {
 					// Enable or disable inactive class
 					$male.toggleClass('inactive');
 					doc.male = !$male.hasClass('inactive');
+					$male[0].paused = !doc.male;
 					that.updateName(doc);
 				});
 
