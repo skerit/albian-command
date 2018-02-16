@@ -478,6 +478,12 @@ ACom.setCacheMethod(function doAsyncInit() {
 		});
 	}, function loadNames(next) {
 
+		var generation,
+		    name,
+		    temp,
+		    i,
+		    j;
+
 		that.letters.forEach(function eachLetter(letter) {
 			that.all_names[letter] = [];
 		});
@@ -500,6 +506,43 @@ ACom.setCacheMethod(function doAsyncInit() {
 
 			next();
 		});
+	}, function addInitialNames(next) {
+
+		// Import names on first load
+		if (!that.getSetting('imported_names')) {
+			that.setSetting('imported_names', true);
+
+			for (i = 0; i < that.capp.names.male.length; i++) {
+				generation = that.capp.names.male[i];
+
+				for (j = 0; j < generation.length; j++) {
+					name = generation[j];
+					temp = that.addName(name);
+
+					if (temp) {
+						temp.male = true;
+						temp.save();
+					}
+				}
+			}
+
+			for (i = 0; i < that.capp.names.female.length; i++) {
+				generation = that.capp.names.female[i];
+
+				for (j = 0; j < generation.length; j++) {
+					name = generation[j];
+					temp = that.addName(name);
+
+					if (temp) {
+						temp.female = true;
+						temp.save();
+					}
+				}
+			}
+		}
+
+		next();
+
 	}, function done(err) {
 
 		if (err) {
@@ -1098,8 +1141,6 @@ ACom.setMethod(function nameCreature(creature, callback) {
 		return callback();
 	}
 
-	console.log('Going to name', creature);
-
 	creature.getGeneration(function gotGeneration(err, generation) {
 
 		var letter,
@@ -1107,8 +1148,6 @@ ACom.setMethod(function nameCreature(creature, callback) {
 		    names,
 		    name,
 		    i;
-
-		console.log('Got generation of', creature, '=', err, generation)
 
 		if (err) {
 			return callback(err);
@@ -1122,8 +1161,6 @@ ACom.setMethod(function nameCreature(creature, callback) {
 
 		// Get the names
 		names = that.all_names[letter];
-
-		console.log('Letter = ', letter, names)
 
 		// Iterate over all the names
 		for (i = 0; i < names.length; i++) {
@@ -1289,6 +1326,12 @@ ACom.setMethod(function _initCreature(creature, callback) {
 });
 
 ACom.addSetting('name_creatures', {
-	title: 'Automatically name new creatures',
-	type : 'boolean'
-})
+	title : 'Automatically name new creatures',
+	type  : 'boolean'
+});
+
+ACom.addSetting('imported_names', {
+	title  : 'Imported names from Creatures library',
+	type   : 'boolean',
+	hidden : true
+});
