@@ -1080,6 +1080,83 @@ ACom.setAfterMethod('ready', function getCreatures(callback) {
 });
 
 /**
+ * Name the given creature
+ *
+ * @author   Jelle De Loecker   <jelle@develry.be>
+ * @since    0.1.0
+ * @version  0.1.0
+ */
+ACom.setMethod(function nameCreature(creature, callback) {
+
+	var that = this;
+
+	if (!callback) {
+		callback = Function.thrower;
+	}
+
+	if (creature.has_name) {
+		return callback();
+	}
+
+	console.log('Going to name', creature);
+
+	creature.getGeneration(function gotGeneration(err, generation) {
+
+		var letter,
+		    index,
+		    names,
+		    name,
+		    i;
+
+		console.log('Got generation of', creature, '=', err, generation)
+
+		if (err) {
+			return callback(err);
+		}
+
+		// Get the letter index
+		index = generation % 26;
+
+		// Get the letter
+		letter = String.fromCharCode(65 + index);
+
+		// Get the names
+		names = that.all_names[letter];
+
+		console.log('Letter = ', letter, names)
+
+		// Iterate over all the names
+		for (i = 0; i < names.length; i++) {
+			name = names[i];
+
+			if (!name.use_count && name[creature.gender]) {
+				break;
+			} else {
+				name = null;
+			}
+		}
+
+		if (name) {
+			if (!name.monikers) {
+				name.monikers = [];
+			}
+
+			name.monikers.push(creature.moniker);
+
+			creature.setName(name.name, function done(err) {
+
+				if (err) {
+					console.error('Error setting name:', name.name, 'on', creature);
+				}
+
+				callback();
+			});
+		}
+
+	});
+});
+
+/**
  * Add the given creature to the list
  *
  * @author   Jelle De Loecker   <jelle@develry.be>
@@ -1089,13 +1166,14 @@ ACom.setAfterMethod('ready', function getCreatures(callback) {
 ACom.setMethod(function _initCreature(creature, callback) {
 
 	var that = this,
+	    updating,
 	    $row,
 	    els;
 
 	els = creature.acom_elements;
 
 	if (els) {
-		return updateCreature();
+		return;
 	}
 
 	creature.acom_elements = els = {};
@@ -1141,14 +1219,10 @@ ACom.setMethod(function _initCreature(creature, callback) {
 
 		// Insert it after the current creature's row
 		$row.after(corow);
-
-
-		//creature_options_row
-		console.log('Click', this);
 	});
 
 	// Initial update
-	updateCreature();
+	updateCreature(callback);
 
 	// Add the row to the screen
 	this.$list.append(els.tbody);
@@ -1157,9 +1231,19 @@ ACom.setMethod(function _initCreature(creature, callback) {
 	creature.on('updated', updateCreature);
 
 	// The update function
-	function updateCreature() {
+	function updateCreature(callback) {
 
 		var name_doc;
+
+		if (updating) {
+			return;
+		}
+
+		updating = true;
+
+		if (!callback) {
+			callback = Function.thrower;
+		}
 
 		els.name.textContent = creature.name;
 		els.moniker.textContent = creature.moniker;
@@ -1181,7 +1265,24 @@ ACom.setMethod(function _initCreature(creature, callback) {
 
 			if (name_doc.monikers.indexOf(creature.moniker) == -1) {
 				name_doc.monikers.push(creature.moniker);
-				name_doc.save();
+				name_doc.save(function saved() {
+					updating = false;
+					callback();
+				});
+			} else {
+				updating = false;
+				callback();
+			}
+		} else {
+			// Add a name!
+			if (creature.is_in_world && that.getSetting('name_creatures')) {
+				that.nameCreature(creature, function done() {
+					updating = false;
+					callback();
+				});
+			} else {
+				updating = false;
+				callback();
 			}
 		}
 	}
