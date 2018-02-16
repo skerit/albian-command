@@ -10,6 +10,7 @@
 @color-s16col-bg: @color-two;
 @color-context-bg: @color-two;
 @color-letter-header-bg: @color-two;
+@color-accordion-header-bg: @color-two;
 
 @color-range-bg: @color-one;
 @color-range-thumb: lighten(@color-two, 10%);
@@ -223,8 +224,27 @@ s16-image {
 	}
 }
 
-#sprites {
-	.flexParent(row);
+.accordion {
+	margin-bottom: 1rem;
+
+	.accordion-opener {
+		display: inline-block;
+		width: 100%;
+		padding: 1rem;
+		background-color: @color-accordion-header-bg;
+		cursor: pointer;
+	}
+
+	.accordion-content {
+		display: none;
+	}
+
+	&.active .accordion-content {
+		.flexParent(row);
+	}
+}
+
+#sprites .accordion-content {
 
 	s16-collection {
 		.flexChild(0 1 31%);
@@ -330,5 +350,14 @@ input[type="range"] {
 			width: 20rem;
 			padding: 0.5rem;
 		}
+	}
+
+	.gender {
+		cursor: pointer;
+	}
+
+	.gender.inactive {
+		-webkit-filter: grayscale(100%);
+		opacity: 0.7;
 	}
 }

@@ -17,6 +17,9 @@ var less_options,
 
 // Error catcher
 window.addEventListener('error', function onError(event) {
+	if (is_dev_mode) {
+		return console.error('Uncaught error:', event);
+	}
 	debug('Uncaught Error in: "' + event.filename + ' @ ' + event.lineno, event.message);
 });
 
@@ -54,7 +57,9 @@ function debug(message) {
 	    i;
 
 	if (is_dev_mode) {
-		return console.log.apply(console, arguments);
+		console.log.apply(console, arguments);
+		console.trace();
+		return;
 	}
 
 	for (i = 0; i < arguments.length; i++) {

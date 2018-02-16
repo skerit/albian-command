@@ -33,3 +33,17 @@ function createCreatureCanvas(creature) {
 
 	return s16image;
 }
+
+$('body').on('click', '.accordion-opener', function onClick(e) {
+
+	var $this = $(this),
+	    $accordion = $this.parents('.accordion');
+
+	// If it already hase the active class, remove it
+	if ($accordion.hasClass('active')) {
+		return $accordion.removeClass('active');
+	}
+
+	$('.accordion').removeClass('active');
+	$accordion.addClass('active');
+});

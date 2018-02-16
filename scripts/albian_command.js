@@ -723,6 +723,26 @@ ACom.setMethod(function removeName(name) {
 });
 
 /**
+ * Update a name
+ *
+ * @author   Jelle De Loecker   <jelle@develry.be>
+ * @since    0.1.0
+ * @version  0.1.0
+ */
+ACom.setMethod(function updateName(name) {
+
+	if (typeof name != 'object') {
+		throw new Error('Unable to update name without document');
+	}
+
+	if (!name._id) {
+		throw new Error('Unable to update name without id');
+	}
+
+	this.getDatabase('names').update({_id: name._id}, name);
+});
+
+/**
  * Load the names tab
  *
  * @author   Jelle De Loecker   <jelle@develry.be>
@@ -775,20 +795,60 @@ ACom.setAfterMethod('ready', function loadNamesTab(names_element) {
 			names.sortByPath(-1, 'name');
 
 			names.forEach(function eachName(doc) {
-				var $row,
+				var $female,
+				    $male,
+				    $row,
 				    html;
 
 				html = `
 					<tr>
 						<td>${doc.name}</td>
-						<td></td>
+						<td>
+							<s16-image
+								s16="Omelette.s16"
+								image-index="38"
+								class="gender female inactive"
+								title="Female"
+							></s16-image>
+
+							<s16-image
+								s16="Omelette.s16"
+								image-index="54"
+								class="gender male inactive"
+								title="Male"
+							></s16-image>
+						</td>
 						<td><a href="#" class="delete">Delete</a></td>
 					</tr>
 				`;
 
 				$row = $(html);
+				$female = $('.female', $row);
+				$male = $('.male', $row);
+
+				if (doc.female) {
+					$female.removeClass('inactive');
+				}
+
+				if (doc.male) {
+					$male.removeClass('inactive');
+				}
 
 				$tbody.append($row);
+
+				$female.on('click', function onClick(e) {
+					// Enable or disable inactive class
+					$female.toggleClass('inactive');
+					doc.female = !$female.hasClass('inactive');
+					that.updateName(doc);
+				});
+
+				$male.on('click', function onClick(e) {
+					// Enable or disable inactive class
+					$male.toggleClass('inactive');
+					doc.male = !$male.hasClass('inactive');
+					that.updateName(doc);
+				});
 
 				$('.delete', $row).on('click', function onClick(e) {
 
@@ -842,9 +902,58 @@ ACom.setAfterMethod('ready', function loadSpritesTab(sprites_element) {
 
 	var that = this,
 	    sprites_path = libpath.resolve(this.capp.process_path, '..', 'Images'),
-	    checkAppears;
+	    $this = $(sprites_element),
+	    $applet,
+	    $general,
+	    $creatures,
+	    checkAppears,
+	    fnamerx = /[a-z]\d\d[a-z]\./i;
 
-	fs.readdir(sprites_path, function gotFiles(err, files) {
+	$this.html(`
+		<div class="sprite-div general-sprites accordion">
+			<div class="accordion-opener">
+				General sprites
+			</div>
+			<div class="accordion-content">
+
+			</div>
+		</div>
+		<div class="sprite-div applet-sprites accordion">
+			<div class="accordion-opener">
+				Applet sprites
+			</div>
+			<div class="accordion-content">
+
+			</div>
+		</div>
+		<div class="sprite-div creature-sprites accordion">
+			<div class="accordion-opener">
+				Creature sprites
+			</div>
+			<div class="accordion-content">
+
+			</div>
+		</div>
+	`);
+
+	$applet = $('.applet-sprites .accordion-content', $this);
+	$general = $('.general-sprites .accordion-content', $this);
+	$creatures = $('.creature-sprites .accordion-content', $this);
+
+	fs.readdir(sprites_path, gotFiles.bind(this, 'Images'));
+	fs.readdir(libpath.resolve(this.capp.process_path, '..', 'Applet Data'), gotFiles.bind(this, 'Applet'));
+
+	if (this.has_s16_listener) {
+		return;
+	}
+
+	this.has_s16_listener = true;
+
+	checkAppears = elementAppears('new-s16', {live: true}, function onS16C(element) {
+		element.showImage(0);
+	});
+
+	function gotFiles(type, err, files) {
 
 		if (err) {
 			throw err;
@@ -868,23 +977,19 @@ ACom.setAfterMethod('ready', function loadSpritesTab(sprites_element) {
 			// Set the filename as title
 			coll.setAttribute('title', file);
 
-			sprites_element.appendChild(coll);
+			if (type == 'Applet') {
+				$applet.append(coll);
+			} else if (fnamerx.test(file)) {
+				$creatures.append(coll);
+			} else {
+				$general.append(coll);
+			}
 
 			coll.s16 = file;
 		});
 
 		checkAppears();
-	});
-
-	if (this.has_s16_listener) {
-		return;
 	}
-
-	this.has_s16_listener = true;
-
-	checkAppears = elementAppears('new-s16', {live: true}, function onS16C(element) {
-		element.showImage(0);
-	});
 });
 
 /**

@@ -10,13 +10,25 @@
  */
 class S16Image extends HTMLElement {
 
+	/**
+	 * S16 value getter
+	 */
 	get s16() {
+
+		// Get the s16 attribute if the value is null
+		if (this._s16 == null) {
+			this._s16 = this.getAttribute('s16');
+		}
+
+		console.log('S16 is', this._s16)
+
 		return this._s16;
 	}
 
 	set s16(value) {
 
 		if (typeof value == 'string') {
+			console.log('VA:', value);
 			value = new Blast.Classes.Develry.Creatures.S16(capp, value);
 		}
 
@@ -63,7 +75,11 @@ class S16Image extends HTMLElement {
 	}
 
 	attributeChangedCallback(name, old_value, new_value) {
-		console.log('Val of', name, 'is now', new_value);
+		if (name == 's16') {
+			this.s16 = new_value;
+		} else if (name == 'image-index') {
+			this.image_index = new_value;
+		}
 	}
 
 	/**
@@ -83,6 +99,16 @@ class S16Image extends HTMLElement {
 
 		// Get the context
 		this.ctx = ctx = canvas.getContext('2d');
+
+		if (this.hasAttribute('s16')) {
+			this.s16 = this.getAttribute('s16');
+		}
+
+		if (this.hasAttribute('image-index')) {
+			this.image_index = this.getAttribute('image-index');
+		} else if (this.s16) {
+			this.image_index = 0;
+		}
 
 		this.appendChild(this.canvas);
 	}
