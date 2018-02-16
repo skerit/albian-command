@@ -773,7 +773,10 @@ ACom.setAfterMethod('ready', function loadNamesTab(names_element) {
 		html = `<table class="name-letter-table" data-letter="${letter}">
 			<thead class="name-letter-header">
 				<tr>
-					<td colspan=3>${letter} (${names.length})</td>
+					<td>${letter} (${names.length})</td>
+					<td><span class="when-open">Gender</span></td>
+					<td><span class="when-open">Use count</span></td>
+					<td></td>
 				</tr>
 			</thead>
 			<tbody></tbody>
@@ -826,6 +829,9 @@ ACom.setAfterMethod('ready', function loadNamesTab(names_element) {
 								class="gender male inactive"
 								title="Male"
 							></s16-image>
+						</td>
+						<td>
+						${doc.use_count}
 						</td>
 						<td><a href="#" class="delete">Delete</a></td>
 					</tr>
@@ -1152,10 +1158,32 @@ ACom.setMethod(function _initCreature(creature, callback) {
 
 	// The update function
 	function updateCreature() {
+
+		var name_doc;
+
 		els.name.textContent = creature.name;
 		els.moniker.textContent = creature.moniker;
 		els.age.textContent = creature.formated_age;
 		els.lifestage.textContent = creature.lifestage;
+
+		if (creature.has_name) {
+			name_doc = that.getName(creature.name);
+
+			if (!name_doc) {
+				name_doc = that.addName(creature.name);
+				name_doc.male = creature.male;
+				name_doc.female = creature.female;
+			}
+
+			if (!name_doc.monikers) {
+				name_doc.monikers = [];
+			}
+
+			if (name_doc.monikers.indexOf(creature.moniker) == -1) {
+				name_doc.monikers.push(creature.moniker);
+				name_doc.save();
+			}
+		}
 	}
 });
 

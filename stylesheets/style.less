@@ -239,6 +239,14 @@ s16-image {
 		display: none;
 	}
 
+	.when-open {
+		opacity: 0;
+	}
+
+	&.active .when-open {
+		opacity: 1;
+	}
+
 	&.active .accordion-content {
 		.flexParent(row);
 	}
@@ -328,6 +336,14 @@ input[type="range"] {
 
 	tbody, tfoot {
 		display: none;
+	}
+
+	.when-open {
+		display: none;
+	}
+
+	&.active .when-open {
+		display: initial;
 	}
 
 	&.active tbody,

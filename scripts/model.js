@@ -56,6 +56,17 @@ Model.constitute(function setNames() {
  * @since    0.1.0
  * @version  0.1.0
  */
+Model.prepareStaticProperty(function RecordClass() {
+	return this.getRecordClass();
+});
+
+/**
+ * Get a record class
+ *
+ * @author   Jelle De Loecker   <jelle@develry.be>
+ * @since    0.1.0
+ * @version  0.1.0
+ */
 Model.setStatic(function getRecordClass(name) {
 
 	var record_name,

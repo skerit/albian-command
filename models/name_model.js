@@ -22,4 +22,12 @@ NameModel.constitute(function addFields() {
 	this.addField('male');
 	this.addField('female');
 	this.addField('monikers');
+
+	this.RecordClass.setProperty(function use_count() {
+		if (!this.monikers) {
+			return 0;
+		}
+
+		return this.monikers.length;
+	})
 });
