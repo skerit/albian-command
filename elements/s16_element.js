@@ -1,5 +1,7 @@
 'use strict';
 
+var cache = {};
+
 /**
  * The s16-image element:
  * show a single entry of an s16
@@ -37,7 +39,11 @@ class S16Image extends HTMLElement {
 	set s16(value) {
 
 		if (typeof value == 'string') {
-			value = new Blast.Classes.Develry.Creatures.S16(capp, value);
+			if (!cache[value]) {
+				cache[value] = new Blast.Classes.Develry.Creatures.S16(capp, value);
+			}
+
+			value = cache[value];
 		}
 
 		this._s16 = value;
@@ -242,6 +248,11 @@ class S16Image extends HTMLElement {
 			}
 			return;
 		}
+
+		// @TODO: only start when visible?
+		// if (!this.isVisible()) {
+		// 	return;
+		// }
 
 		increment = Number(this.getAttribute('animation-increment')) || 1;
 		fps = Number(this.getAttribute('animation-fps')) || 8;
