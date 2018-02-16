@@ -31,6 +31,10 @@ var ACom = Function.inherits('Develry.Creatures.Base', function AlbianCommand() 
 	// Default values
 	this.speed = 1;
 
+	// Models
+	this.Setting = this.getModel('Setting');
+	this.Name = this.getModel('Name');
+
 	this.init();
 });
 
@@ -423,6 +427,17 @@ ACom.setMethod(function getFavouriteLocations(callback) {
 });
 
 /**
+ * Get a model
+ *
+ * @author   Jelle De Loecker   <jelle@develry.be>
+ * @since    0.1.0
+ * @version  0.1.0
+ */
+ACom.setMethod(function getModel(name) {
+	return new Blast.Classes.Develry.Creatures.Model(this, name);
+});
+
+/**
  * Initialize the asynchronous side of the app
  *
  * @author   Jelle De Loecker   <jelle@develry.be>
@@ -431,15 +446,13 @@ ACom.setMethod(function getFavouriteLocations(callback) {
  */
 ACom.setCacheMethod(function doAsyncInit() {
 
-	var that = this,
-	    Setting = this.getDatabase('settings'),
-	    Name = this.getDatabase('names');
+	var that = this;
 
 	this.all_names = {};
 	this.lower_names = [];
 
 	Function.series(function getSettings(next) {
-		Setting.find({key: 'settings'}, function gotSettings(err, docs) {
+		that.Setting.find({key: 'settings'}, function gotSettings(err, docs) {
 
 			var doc;
 
@@ -450,19 +463,7 @@ ACom.setCacheMethod(function doAsyncInit() {
 			doc = docs[0];
 
 			if (!doc) {
-				doc = {
-					key: 'settings'
-				};
-
-				return Setting.insert(doc, function saved(err, new_doc) {
-
-					if (err) {
-						return next(err);
-					}
-
-					that.settings_doc = new_doc;
-					next();
-				});
+				doc = that.Setting.createRecord({key: 'settings'});
 			}
 
 			that.settings_doc = doc;
@@ -474,15 +475,22 @@ ACom.setCacheMethod(function doAsyncInit() {
 			that.all_names[letter] = [];
 		});
 
-		Name.find({}, function gotAllNames(err, docs) {
+		that.Name.find({}, function gotAllNames(err, docs) {
 
 			if (err) {
 				return next(err);
 			}
 
+			console.log('All names:', docs);
+
 			docs.forEach(function eachDoc(doc) {
-				that.all_names[doc.letter].push(doc);
-				that.lower_names.push(doc.name.toLowerCase());
+
+				if (!doc.get('letter')) {
+					return;
+				}
+
+				that.all_names[doc.get('letter')].push(doc);
+				that.lower_names.push(doc.get('name').toLowerCase());
 			});
 
 			next();
@@ -505,8 +513,8 @@ ACom.setCacheMethod(function doAsyncInit() {
  * @version  0.1.0
  */
 ACom.setMethod(function setSetting(name, value) {
-	this.settings_doc[name] = value;
-	this.getDatabase('settings').update({key: 'settings'}, this.settings_doc);
+	this.settings_doc.set(name, value);
+	this.settings_doc.save();
 });
 
 /**
@@ -517,7 +525,7 @@ ACom.setMethod(function setSetting(name, value) {
  * @version  0.1.0
  */
 ACom.setMethod(function getSetting(name) {
-	return this.settings_doc[name];
+	return this.settings_doc.get(name);
 });
 
 /**
@@ -626,7 +634,7 @@ ACom.setMethod(function getName(name) {
 	letter = name[0].toUpperCase();
 
 	if (this.all_names[letter]) {
-		result = this.all_names[letter].findByPath('name', name);
+		result = this.all_names[letter].findByPath('data.name', name);
 
 		if (result) {
 			return result;
@@ -634,7 +642,7 @@ ACom.setMethod(function getName(name) {
 	}
 
 	for (i = 0; i < this.all_names[letter].length; i++) {
-		key = this.all_names[letter][i].name;
+		key = this.all_names[letter][i].get('name');
 
 		if (key.toLowerCase() == lower_name) {
 			return this.all_names[letter][i];
@@ -665,22 +673,15 @@ ACom.setMethod(function addName(name) {
 
 	letter = name[0].toUpperCase();
 
-	new_doc = {
+	new_doc = this.Name.createRecord({
 		letter : letter,
 		name   : name
-	};
+	});
 
 	this.all_names[letter].push(new_doc);
 	this.lower_names.push(name.toLowerCase());
 
-	this.getDatabase('names').insert(new_doc, function gotNewDoc(err, saved_doc) {
-
-		if (err) {
-			throw err;
-		}
-
-		new_doc._id = saved_doc._id;
-	});
+	new_doc.save();
 
 	return new_doc;
 });
@@ -712,7 +713,7 @@ ACom.setMethod(function removeName(name) {
 		return false;
 	}
 
-	this.getDatabase('names').remove({_id: doc._id});
+	doc.remove();
 
 	for (i = 0; i < this.all_names[letter].length; i++) {
 		if (this.all_names[letter][i].name == name) {
@@ -739,7 +740,7 @@ ACom.setMethod(function updateName(name) {
 		throw new Error('Unable to update name without id');
 	}
 
-	this.getDatabase('names').update({_id: name._id}, name);
+	name.save();
 });
 
 /**
@@ -802,7 +803,7 @@ ACom.setAfterMethod('ready', function loadNamesTab(names_element) {
 
 				html = `
 					<tr>
-						<td>${doc.name}</td>
+						<td>${doc.get('name')}</td>
 						<td>
 							<s16-image
 								s16="Omelette.s16"
@@ -829,33 +830,33 @@ ACom.setAfterMethod('ready', function loadNamesTab(names_element) {
 				$female = $('.female', $row);
 				$male = $('.male', $row);
 
-				if (doc.female) {
+				if (doc.get('female')) {
 					$female.removeClass('inactive');
 				}
 
-				$female[0].paused = !doc.female;
+				$female[0].paused = !doc.get('female');
 
-				if (doc.male) {
+				if (doc.get('male')) {
 					$male.removeClass('inactive');
 				}
 
-				$male[0].paused = !doc.male;
+				$male[0].paused = !doc.get('male');
 
 				$tbody.append($row);
 
 				$female.on('click', function onClick(e) {
 					// Enable or disable inactive class
 					$female.toggleClass('inactive');
-					doc.female = !$female.hasClass('inactive');
-					$female[0].paused = !doc.female;
+					doc.set('female', !$female.hasClass('inactive'));
+					$female[0].paused = !doc.get('female');
 					that.updateName(doc);
 				});
 
 				$male.on('click', function onClick(e) {
 					// Enable or disable inactive class
 					$male.toggleClass('inactive');
-					doc.male = !$male.hasClass('inactive');
-					$male[0].paused = !doc.male;
+					doc.set('male', !$male.hasClass('inactive'));
+					$male[0].paused = !doc.get('male');
 					that.updateName(doc);
 				});
 
@@ -866,7 +867,7 @@ ACom.setAfterMethod('ready', function loadNamesTab(names_element) {
 					}
 
 					$row.remove();
-					that.removeName(doc.name);
+					that.removeName(doc.get('name'));
 				});
 			});
 		}
@@ -888,9 +889,9 @@ ACom.setAfterMethod('ready', function loadNamesTab(names_element) {
 				this.value = '';
 
 				if (result) {
-					if (result.letter != letter) {
+					if (result.get('letter') != letter) {
 						loadNamesTab.call(that, names_element);
-						$('table[data-letter="' + result.letter + '"]').addClass('active');
+						$('table[data-letter="' + result.get('letter') + '"]').addClass('active');
 					} else {
 						recreateTbody();
 					}

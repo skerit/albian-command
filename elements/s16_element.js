@@ -37,7 +37,6 @@ class S16Image extends HTMLElement {
 	set s16(value) {
 
 		if (typeof value == 'string') {
-			console.log('VA:', value);
 			value = new Blast.Classes.Develry.Creatures.S16(capp, value);
 		}
 

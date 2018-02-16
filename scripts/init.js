@@ -1,9 +1,12 @@
 var less_options,
     is_dev_mode,
+    machine_id,
+    process_id,
     Creatures,
     creatures,
     exec_dir,
     cwd_dir,
+    counter = 0,
     libpath = require('path'),
     realfs = require('fs'),
     Blast,
@@ -46,6 +49,51 @@ db = new NeDB({
 	filename : libpath.join(require('nw.gui').App.dataPath, 'albian_command.db'),
 	autoload : true
 });
+
+/**
+ * Create an object id
+ */
+function createObjectId() {
+
+	var result,
+	    count,
+	    time;
+
+	// Start with 4 bytes for the time in seconds
+	time = parseInt(Date.now()/1000).toString(16).slice(0, 8);
+	result = time;
+
+	// Add the machine identifier
+	if (!machine_id) {
+		machine_id = Math.abs(Blast.Bound.String.fowler(navigator.userAgent)).toString(16);
+
+		if (machine_id.length < 6) {
+			machine_id += result;
+		}
+
+		// Get the first 6 pieces
+		machine_id = machine_id.slice(0, 6);
+	}
+
+	result += machine_id;
+
+	if (!process_id) {
+		process_id = Blast.Classes.Crypto.pseudoHex().slice(0, 4);
+	}
+
+	result += process_id;
+
+	// Create the counter
+	count = (counter++).toString(16);
+
+	if (count.length < 6) {
+		count = Blast.Bound.String.multiply('0', 6 - count.length) + count;
+	}
+
+	result += count;
+
+	return result;
+}
 
 /**
  * Debug handler that show the message in an alert
