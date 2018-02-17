@@ -683,6 +683,12 @@ ACom.setAfterMethod('ready', function loadSettingsTab(settings_element) {
 		    label,
 		    row;
 
+		// Don't show hidden configurations
+		// (@TODO: add button to make these visible anyway)
+		if (config.hidden) {
+			return;
+		}
+
 		row = document.createElement('tr');
 		name_td = document.createElement('td');
 		val_td = document.createElement('td');
