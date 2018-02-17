@@ -28,6 +28,9 @@ var ACom = Function.inherits('Develry.Creatures.Base', function AlbianCommand() 
 	// Link to the speed range slider
 	this.$speed      = $('.speed');
 
+	// Update count
+	this.update_count = 0;
+
 	// Default values
 	this.speed = 1;
 
@@ -1091,12 +1094,25 @@ ACom.setAfterMethod('ready', function getWorldName(callback) {
  */
 ACom.setAfterMethod('ready', function getCreatures(callback) {
 
-	var that = this;
+	var that = this,
+	    remember_names = false;
 
 	if (!callback) {
 		callback = Function.thrower;
 	}
 
+	// Increment the update count
+	this.update_count++;
+
+	// If the setting to make the creatures remember their name is on,
+	// Re-set their name every 1.5 minutes
+	if (this.getSetting('make_creatures_remember_their_name')) {
+		if (this.update_count % 6 == 0) {
+			remember_names = true;
+		}
+	}
+
+	// Get the actual creatures
 	capp.getCreatures(function gotCreatures(err, creatures) {
 
 		var tasks = [];
@@ -1107,6 +1123,12 @@ ACom.setAfterMethod('ready', function getCreatures(callback) {
 
 		creatures.forEach(function eachCreature(creature) {
 			tasks.push(function doCreature(next) {
+
+				// Re-set the creature's name
+				if (remember_names && creature.has_name) {
+					creature.setName(creature.name);
+				}
+
 				that._initCreature(creature, next);
 			});
 		});
@@ -1326,12 +1348,20 @@ ACom.setMethod(function _initCreature(creature, callback) {
 });
 
 ACom.addSetting('name_creatures', {
-	title : 'Automatically name new creatures',
-	type  : 'boolean'
+	title   : 'Automatically name new creatures',
+	type    : 'boolean',
+	default : true
 });
 
 ACom.addSetting('imported_names', {
-	title  : 'Imported names from Creatures library',
-	type   : 'boolean',
-	hidden : true
+	title   : 'Imported names from Creatures library',
+	type    : 'boolean',
+	default : false,
+	hidden  : true
+});
+
+ACom.addSetting('make_creatures_remember_their_name', {
+	title   : 'Make Creatures remember their name',
+	type    : 'boolean',
+	default : true
 });
