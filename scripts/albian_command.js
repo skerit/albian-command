@@ -28,6 +28,9 @@ var ACom = Function.inherits('Develry.Creatures.Base', function AlbianCommand() 
 	// Link to the speed range slider
 	this.$speed      = $('.speed');
 
+	// All the settings
+	this.settings = {};
+
 	// Update count
 	this.update_count = 0;
 
@@ -50,11 +53,11 @@ var ACom = Function.inherits('Develry.Creatures.Base', function AlbianCommand() 
  */
 ACom.setStatic(function addSetting(name, options) {
 
-	if (!this.settings) {
-		this.settings = {};
+	if (!this.available_settings) {
+		this.available_settings = {};
 	}
 
-	this.settings[name] = options;
+	this.available_settings[name] = options;
 });
 
 /**
@@ -205,6 +208,113 @@ ACom.setMethod(function init() {
 });
 
 /**
+ * Initialize the asynchronous side of the app
+ *
+ * @author   Jelle De Loecker   <jelle@develry.be>
+ * @since    0.1.0
+ * @version  0.1.0
+ */
+ACom.setCacheMethod(function doAsyncInit() {
+
+	var that = this;
+
+	this.all_names = {};
+	this.lower_names = [];
+
+	Function.series(function getSettings(next) {
+		// Preload all the settings
+		that.Setting.find({}, function gotSettings(err, docs) {
+
+			var doc;
+
+			if (err) {
+				return next(err);
+			}
+
+			docs.forEach(function eachSetting(doc) {
+				that.settings[doc.name] = doc;
+			});
+
+			next();
+		});
+	}, function loadNames(next) {
+
+		var generation,
+		    name,
+		    temp,
+		    i,
+		    j;
+
+		that.letters.forEach(function eachLetter(letter) {
+			that.all_names[letter] = [];
+		});
+
+		that.Name.find({}, function gotAllNames(err, docs) {
+
+			if (err) {
+				return next(err);
+			}
+
+			docs.forEach(function eachDoc(doc) {
+
+				if (!doc.letter) {
+					return;
+				}
+
+				that.all_names[doc.letter].push(doc);
+				that.lower_names.push(doc.name.toLowerCase());
+			});
+
+			next();
+		});
+	}, function addInitialNames(next) {
+
+		// Import names on first load
+		if (!that.getSetting('imported_names')) {
+			that.setSetting('imported_names', true);
+
+			for (i = 0; i < that.capp.names.male.length; i++) {
+				generation = that.capp.names.male[i];
+
+				for (j = 0; j < generation.length; j++) {
+					name = generation[j];
+					temp = that.addName(name);
+
+					if (temp) {
+						temp.male = true;
+						temp.save();
+					}
+				}
+			}
+
+			for (i = 0; i < that.capp.names.female.length; i++) {
+				generation = that.capp.names.female[i];
+
+				for (j = 0; j < generation.length; j++) {
+					name = generation[j];
+					temp = that.addName(name);
+
+					if (temp) {
+						temp.female = true;
+						temp.save();
+					}
+				}
+			}
+		}
+
+		next();
+
+	}, function done(err) {
+
+		if (err) {
+			throw err;
+		}
+
+		that.emit('ready');
+	});
+});
+
+/**
  * Do an update
  *
  * @author   Jelle De Loecker   <jelle@develry.be>
@@ -243,7 +353,7 @@ ACom.setMethod(function getDatabase(name) {
 	if (!this.dbs[name]) {
 
 		this.dbs[name] = new NeDB({
-			filename : libpath.join(require('nw.gui').App.dataPath, name + '.db'),
+			filename : libpath.join(require('nw.gui').App.dataPath, name + '.json'),
 			autoload : true
 		});
 	}
@@ -448,115 +558,6 @@ ACom.setMethod(function getModel(name) {
 });
 
 /**
- * Initialize the asynchronous side of the app
- *
- * @author   Jelle De Loecker   <jelle@develry.be>
- * @since    0.1.0
- * @version  0.1.0
- */
-ACom.setCacheMethod(function doAsyncInit() {
-
-	var that = this;
-
-	this.all_names = {};
-	this.lower_names = [];
-
-	Function.series(function getSettings(next) {
-		that.Setting.find({key: 'settings'}, function gotSettings(err, docs) {
-
-			var doc;
-
-			if (err) {
-				return next(err);
-			}
-
-			doc = docs[0];
-
-			if (!doc) {
-				doc = that.Setting.createRecord({key: 'settings'});
-			}
-
-			that.settings_doc = doc;
-			next();
-		});
-	}, function loadNames(next) {
-
-		var generation,
-		    name,
-		    temp,
-		    i,
-		    j;
-
-		that.letters.forEach(function eachLetter(letter) {
-			that.all_names[letter] = [];
-		});
-
-		that.Name.find({}, function gotAllNames(err, docs) {
-
-			if (err) {
-				return next(err);
-			}
-
-			docs.forEach(function eachDoc(doc) {
-
-				if (!doc.letter) {
-					return;
-				}
-
-				that.all_names[doc.letter].push(doc);
-				that.lower_names.push(doc.name.toLowerCase());
-			});
-
-			next();
-		});
-	}, function addInitialNames(next) {
-
-		// Import names on first load
-		if (!that.getSetting('imported_names')) {
-			that.setSetting('imported_names', true);
-
-			for (i = 0; i < that.capp.names.male.length; i++) {
-				generation = that.capp.names.male[i];
-
-				for (j = 0; j < generation.length; j++) {
-					name = generation[j];
-					temp = that.addName(name);
-
-					if (temp) {
-						temp.male = true;
-						temp.save();
-					}
-				}
-			}
-
-			for (i = 0; i < that.capp.names.female.length; i++) {
-				generation = that.capp.names.female[i];
-
-				for (j = 0; j < generation.length; j++) {
-					name = generation[j];
-					temp = that.addName(name);
-
-					if (temp) {
-						temp.female = true;
-						temp.save();
-					}
-				}
-			}
-		}
-
-		next();
-
-	}, function done(err) {
-
-		if (err) {
-			throw err;
-		}
-
-		that.emit('ready');
-	});
-});
-
-/**
  * Set a specific setting
  *
  * @author   Jelle De Loecker   <jelle@develry.be>
@@ -564,8 +565,11 @@ ACom.setCacheMethod(function doAsyncInit() {
  * @version  0.1.0
  */
 ACom.setMethod(function setSetting(name, value) {
-	this.settings_doc.set(name, value);
-	this.settings_doc.save();
+
+	var doc = this.getSettingDocument(name);
+
+	doc.value = value;
+	doc.save();
 });
 
 /**
@@ -574,9 +578,43 @@ ACom.setMethod(function setSetting(name, value) {
  * @author   Jelle De Loecker   <jelle@develry.be>
  * @since    0.1.0
  * @version  0.1.0
+ *
+ * @return   {Record}
+ */
+ACom.setMethod(function getSettingDocument(name) {
+
+	var doc = this.settings[name],
+	    config,
+	    data;
+
+	if (!doc) {
+		// Get the configuration
+		config = ACom.available_settings[name] || {};
+
+		// Create the new data
+		data = {
+			name  : name,
+			value : config.default
+		};
+
+		this.settings[name] = doc = this.Setting.createRecord(data);
+		doc.save();
+	}
+
+	return doc;
+});
+
+/**
+ * Get a specific setting value
+ *
+ * @author   Jelle De Loecker   <jelle@develry.be>
+ * @since    0.1.0
+ * @version  0.1.0
+ *
+ * @return   {Mixed}
  */
 ACom.setMethod(function getSetting(name) {
-	return this.settings_doc.get(name);
+	return this.getSettingDocument(name).value;
 });
 
 /**
@@ -596,7 +634,7 @@ ACom.setAfterMethod('ready', function loadSettingsTab(settings_element) {
 	tbody = settings_element.querySelector('tbody');
 	tbody.innerHTML = '';
 
-	Object.each(ACom.settings, function eachSetting(config, key) {
+	Object.each(ACom.available_settings, function eachSetting(config, key) {
 
 		var valwrap,
 		    element,
@@ -651,12 +689,8 @@ ACom.setAfterMethod('ready', function loadSettingsTab(settings_element) {
 				value = this.value;
 			}
 
-			console.log('Change!', value, 'saving', key);
-
 			that.setSetting(key, value);
 		});
-
-		console.log('Load setting', key, config);
 	});
 });
 

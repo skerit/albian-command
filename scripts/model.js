@@ -209,6 +209,12 @@ Model.setMethod(function createRecord(data) {
 		data._id = createObjectId();
 	}
 
+	if (!data.created) {
+		data.created = new Date();
+	}
+
+	data.updated = new Date();
+
 	result = new RecordClass(this, data);
 	this.cache[data._id] = result;
 

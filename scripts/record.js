@@ -73,6 +73,8 @@ Record.setMethod(function save(callback) {
 		callback = Function.thrower;
 	}
 
+	this.data.updated = new Date();
+
 	this.model.update({_id: this._id}, this.data, {upsert: true}, function saved(err, result) {
 
 		if (err) {
