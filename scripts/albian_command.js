@@ -181,9 +181,12 @@ ACom.setMethod(function init() {
 
 	this.$sidelinks.on('click', function onClick(e) {
 
-		var target_id = this.getAttribute('href'),
+		var $jsvalues,
+		    target_id = this.getAttribute('href'),
 		    target    = document.querySelector(target_id),
 		    cbname;
+
+		e.preventDefault();
 
 		// Remove the active class from all sidebar links
 		$sidelinks.removeClass('active');
@@ -204,7 +207,11 @@ ACom.setMethod(function init() {
 			that[cbname](target);
 		}
 
-		e.preventDefault();
+		$jsvalues = $('[js-value]', target);
+
+		if ($jsvalues.length) {
+			that.applyJsValues($jsvalues, target);
+		}
 	});
 
 	setInterval(function doUpdate() {
@@ -428,6 +435,7 @@ ACom.setMethod(function createActionElement(title, s16_name, index) {
 	});
 
 	wrapper_el.addEventListener('click', function onClick(e) {
+
 		if (typeof that[method_name] == 'function') {
 
 			// Use `attr`, not `data`, because it gives back old data
@@ -459,6 +467,37 @@ ACom.setMethod(function createActionElement(title, s16_name, index) {
 	});
 
 	return wrapper_el;
+});
+
+/**
+ * Apply js vlaues
+ *
+ * @author   Jelle De Loecker   <jelle@develry.be>
+ * @since    0.1.0
+ * @version  0.1.0
+ */
+ACom.setMethod(function applyJsValues($elements, target) {
+
+	var that = this;
+
+	$elements.each(function eachElement() {
+
+		var $this = $(this),
+		    value,
+		    cmd = $this.attr('js-value');
+
+		value = Object.path(that, cmd);
+
+		if (value == null) {
+			value = Object.path(window, cmd);
+		}
+
+		if (value == null) {
+			value = '';
+		}
+
+		$this.text(value);
+	});
 });
 
 /**
@@ -539,11 +578,11 @@ ACom.setMethod(function doTeleportAction(action_element, creature) {
 			var loc = locations[key];
 
 			creature.move(loc.x, loc.y, function done(err) {
-				console.log('Moved creature?', err);
+				if (err) {
+					console.error('Error moving creature:', err);
+				}
 			})
-
-			console.log('Clicked on', loc);
-		}
+		};
 
 		result.items = items;
 		offset = $this.offset();

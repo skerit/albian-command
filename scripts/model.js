@@ -107,9 +107,6 @@ Model.setStatic(function getRecordClass(name) {
  * @version  0.1.0
  */
 Model.setStatic(function addField(name) {
-
-	console.log('model_name = ', this.model_name);
-
 	var doc_class = this.getRecordClass(this.model_name);
 	doc_class.addField(name);
 });

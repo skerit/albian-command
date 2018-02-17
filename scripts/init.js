@@ -6,6 +6,7 @@ var less_options,
     creatures,
     exec_dir,
     cwd_dir,
+    package,
     counter = 0,
     libpath = require('path'),
     realfs = require('fs'),
@@ -15,6 +16,8 @@ var less_options,
     capp,
     less = require('less'),
     NeDB = require('nedb'),
+    gui = require('nw.gui'),
+    win = gui.Window.get(),
     fs = require('graceful-fs'),
     db;
 
@@ -25,6 +28,8 @@ window.addEventListener('error', function onError(event) {
 	}
 	debug('Uncaught Error in: "' + event.filename + ' @ ' + event.lineno, event.message);
 });
+
+package = require('./package.json');
 
 // Monkey-patch fs please
 fs.gracefulify(realfs);
@@ -46,8 +51,14 @@ exec_dir = libpath.dirname(process.execPath);
 
 // Create the database instance
 db = new NeDB({
-	filename : libpath.join(require('nw.gui').App.dataPath, 'albian_command.db'),
+	filename : libpath.join(gui.App.dataPath, 'albian_command.db'),
 	autoload : true
+});
+
+// Open new windows in external browser!
+win.on('new-win-policy', function onNewWindowRequest(frame, url, policy) {
+	gui.Shell.openExternal(url);
+	policy.ignore();
 });
 
 /**

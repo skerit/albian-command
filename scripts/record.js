@@ -33,8 +33,6 @@ Record.setProperty(function _id() {
  * @version  0.1.0
  */
 Record.setStatic(function addField(name) {
-	console.log('Setting property', name, 'on', this);
-
 	this.setProperty(name, function getter() {
 		return this.get(name)
 	}, function setter(value) {
