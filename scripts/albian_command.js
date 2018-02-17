@@ -67,7 +67,7 @@ ACom.setStatic(function addSetting(name, options) {
  * @since    0.1.0
  * @version  0.1.0
  */
-ACom.setProperty('creatures_headers', ['picture', 'name', 'age', 'lifestage', 'status', 'n', 'drive', 'moniker']);
+ACom.setProperty('creatures_headers', ['picture', 'name', 'age', 'lifestage', 'health', 'status', 'n', 'drive', 'moniker']);
 
 /**
  * The starting letters:
@@ -1413,8 +1413,15 @@ ACom.setMethod(function _initCreature(creature, callback) {
 
 		els.name.textContent = creature.name;
 		els.moniker.textContent = creature.moniker;
+
 		els.age.textContent = creature.formated_age;
+		els.age.dataset.sortValue = creature.age;
+
 		els.lifestage.textContent = creature.lifestage;
+		els.lifestage.dataset.sortValue = creature.agen;
+
+		els.health.textContent = ~~(creature.health / 2) + '%';
+		els.health.dataset.sortValue = creature.health;
 
 		if (creature.has_name) {
 			name_doc = that.getName(creature.name);

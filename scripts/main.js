@@ -47,3 +47,63 @@ $('body').on('click', '.accordion-opener', function onClick(e) {
 	$('.accordion').removeClass('active');
 	$accordion.addClass('active');
 });
+
+/**
+ * Make tables sortable
+ *
+ * @author   Jelle De Loecker   <jelle@develry.be>
+ * @since    0.1.0
+ * @version  0.1.0
+ */
+function makeSortable(table) {
+	var $table = $(table),
+	    $thead = $('thead', $table).first(),
+	    $ths = $('th', $table);
+
+	$table.addClass('sortable');
+
+	$ths.on('click', function onClick(e) {
+
+		var $th = $(this),
+		    siblings = Array.cast(this.parentElement.children),
+		    th_index = siblings.indexOf(this),
+		    direction = this.dataset.sortDirection || -1;
+		    temp_table = [];
+
+		// Reverse the sort order
+		direction *= -1;
+		this.dataset.sortDirection = direction;
+
+		$('tbody', $table).each(function eachBody(index) {
+			var $first_row = $('tr', this).first(),
+			    value_element = $first_row[0].children[th_index],
+			    value;
+
+			if (value_element.hasAttribute('data-sort-value')) {
+				value = value_element.getAttribute('data-sort-value');
+			} else {
+				value = value_element.textContent;
+			}
+
+			if (Number.isNumeric(value)) {
+				value = Number(value);
+			}
+
+			temp_table.push({
+				element    : this,
+				sort_value : value
+			});
+		});
+
+		// Sort the values
+		temp_table.sortByPath(direction, 'sort_value');
+
+		temp_table.forEach(function eachEntry(entry) {
+			$thead.after(entry.element);
+		});
+	});
+}
+
+elementAppears('make-sortable', {live: true}, function gotTable(table) {
+	makeSortable(table);
+});
