@@ -91,7 +91,8 @@ ACom.prepareProperty(function creature_options_row() {
 	var row = document.createElement('tr'),
 	    column = document.createElement('td'),
 	    pick_up,
-	    teleport;
+	    teleport,
+	    language;
 
 	// Indicate this is the actions row
 	row.classList.add('actions-row');
@@ -106,6 +107,9 @@ ACom.prepareProperty(function creature_options_row() {
 
 	teleport = this.createActionElement('Teleport', 'tele.s16');
 	column.appendChild(teleport);
+
+	language = this.createActionElement('Teach Language', 'acmp.s16');
+	column.appendChild(language);
 
 	return row;
 });
@@ -135,7 +139,8 @@ ACom.setProperty(function speed() {
 	return this._speed / 2;
 }, function setSpeed(value) {
 
-	var send_value = value * 2;
+	var send_value = value * 2,
+	    was_set = this._speed != null;
 
 	// Remember the speed
 	this._speed = value;
@@ -144,8 +149,8 @@ ACom.setProperty(function speed() {
 	this.$speed_val.text(value + 'x');
 
 	// And change the game speed (but not on the initial value)
-	if (this._speed != null) {
-		this.capp.setSpeed(send_value);
+	if (was_set) {
+		this.setAcceleration(send_value);
 	}
 });
 
@@ -315,6 +320,17 @@ ACom.setCacheMethod(function doAsyncInit() {
 });
 
 /**
+ * Set the speed of the game
+ *
+ * @author   Jelle De Loecker   <jelle@develry.be>
+ * @since    0.1.0
+ * @version  0.1.0
+ */
+ACom.setMethod(function setAcceleration(value, callback) {
+	this.capp.setSpeed(value, callback);
+});
+
+/**
  * Do an update
  *
  * @author   Jelle De Loecker   <jelle@develry.be>
@@ -403,6 +419,9 @@ ACom.setMethod(function createActionElement(title, s16_name, index) {
 	method_name = 'do' + title.camelize() + 'Action';
 
 	wrapper_el.addEventListener('mousedown', function onDown(e) {
+
+		wrapper_el.classList.add('mousedown');
+
 		if (wrapper_el.dataset.click_image_index) {
 			s16_el.image_index = wrapper_el.dataset.click_image_index;
 		}
@@ -432,11 +451,31 @@ ACom.setMethod(function createActionElement(title, s16_name, index) {
 	});
 
 	wrapper_el.addEventListener('mouseup', function onUp(e) {
+
+		wrapper_el.classList.remove('mousedown');
+
 		// Reset the index
 		s16_el.image_index = index;
 	});
 
 	return wrapper_el;
+});
+
+/**
+ * Teach the creature all the language & remember its name
+ *
+ * @author   Jelle De Loecker   <jelle@develry.be>
+ * @since    0.1.0
+ * @version  0.1.0
+ */
+ACom.setMethod(function doTeachLanguageAction(action_element, creature) {
+
+	if (!creature) {
+		throw new Error('Creature has not been defined, can not teach language');
+	}
+
+	// Teach the language
+	this.teachLanguage(creature);
 });
 
 /**
@@ -1156,6 +1195,7 @@ ACom.setAfterMethod('ready', function getCreatures(callback) {
 		}
 
 		creatures.forEach(function eachCreature(creature) {
+
 			tasks.push(function doCreature(next) {
 
 				// Re-set the creature's name
@@ -1174,6 +1214,33 @@ ACom.setAfterMethod('ready', function getCreatures(callback) {
 			}
 
 			callback(null, creatures);
+		});
+	});
+});
+
+/**
+ * Teach the creature language
+ *
+ * @author   Jelle De Loecker   <jelle@develry.be>
+ * @since    0.1.0
+ * @version  0.1.0
+ */
+ACom.setMethod(function teachLanguage(creature, callback) {
+
+	if (!callback) {
+		callback = Function.thrower;
+	}
+
+	// First teach language
+	creature.teachLanguage(function done(err) {
+
+		if (err) {
+			return callback(err);
+		}
+
+		// Then reset the name
+		creature.setName(creature.name, function done(err) {
+			callback(err);
 		});
 	});
 });
