@@ -80,7 +80,7 @@ ACom.setProperty('creatures_headers', ['picture', 'name', 'age', 'lifestage', 'h
 ACom.setProperty('letters', Array.range(65, 91).map(function(v) {return String.fromCharCode(v)}));
 
 /**
- * The name of the current world
+ * The specific creatures actions row
  *
  * @author   Jelle De Loecker   <jelle@develry.be>
  * @since    0.1.0
@@ -110,6 +110,29 @@ ACom.prepareProperty(function creature_options_row() {
 
 	language = this.createActionElement('Teach Language', 'acmp.s16');
 	column.appendChild(language);
+
+	return row;
+});
+
+/**
+ * The generic creatures actions row
+ *
+ * @author   Jelle De Loecker   <jelle@develry.be>
+ * @since    0.1.0
+ * @version  0.1.0
+ */
+ACom.prepareProperty(function all_creature_actions_row() {
+
+	var row = document.createElement('tr'),
+	    column = document.createElement('td'),
+	    export_all;
+
+	// Indicate this is the actions row
+	row.classList.add('actions-row');
+	row.appendChild(column);
+
+	// export_all = this.createActionElement('Export All', 'boin.s16', 0);
+	// column.appendChild(export_all);
 
 	return row;
 });
@@ -696,6 +719,64 @@ ACom.setMethod(function getSetting(name) {
 });
 
 /**
+ * Load the creatures tab
+ *
+ * @author   Jelle De Loecker   <jelle@develry.be>
+ * @since    0.1.1
+ * @version  0.1.1
+ */
+ACom.setAfterMethod('ready', function loadCreaturesTab(element) {
+
+	var general_actions_row = this.all_creature_actions_row,
+	    general_actions_table;
+
+	if (!general_actions_row.parentElement) {
+		general_actions_table = element.querySelector('.creatures-generic-actions');
+		general_actions_table.appendChild(general_actions_row);
+	}
+});
+
+/**
+ * Export all the creatures
+ *
+ * @author   Jelle De Loecker   <jelle@develry.be>
+ * @since    0.1.0
+ * @version  0.1.0
+ */
+ACom.setMethod(function doExportAllAction() {
+
+	var that = this,
+	    tasks;
+
+	// Make the user choose a directory to export to
+	chooseDirectory(function done(err, path) {
+
+		if (err) {
+			return alert('Error: ' + err);
+		}
+
+		if (!path) {
+			return;
+		}
+
+		that.getCreatures(function gotCreatures(err, creatures) {
+
+			console.log('Got...', err, creatures)
+
+			if (err) {
+				throw err;
+			}
+
+			creatures.forEach(function eachCreature(creature) {
+
+				console.log('Should export', creature.moniker);
+
+			});
+		});
+	});
+});
+
+/**
  * Load the settings tab
  *
  * @author   Jelle De Loecker   <jelle@develry.be>
@@ -1215,6 +1296,8 @@ ACom.setAfterMethod('ready', function getCreatures(callback) {
 	var that = this,
 	    remember_names = false;
 
+	console.log('Getcreatures callback = ', callback);
+
 	if (!callback) {
 		callback = Function.thrower;
 	}
@@ -1229,6 +1312,8 @@ ACom.setAfterMethod('ready', function getCreatures(callback) {
 			remember_names = true;
 		}
 	}
+
+	console.log('Asking capp');
 
 	// Get the actual creatures
 	capp.getCreatures(function gotCreatures(err, creatures) {
@@ -1366,7 +1451,7 @@ ACom.setMethod(function nameCreature(creature, callback) {
  *
  * @author   Jelle De Loecker   <jelle@develry.be>
  * @since    0.1.0
- * @version  0.1.0
+ * @version  0.1.1
  */
 ACom.setMethod(function _initCreature(creature, callback) {
 
@@ -1378,6 +1463,9 @@ ACom.setMethod(function _initCreature(creature, callback) {
 	els = creature.acom_elements;
 
 	if (els) {
+		if (callback) {
+			creature.afterOnce('updated', callback);
+		}
 		return;
 	}
 
