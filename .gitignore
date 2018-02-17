@@ -24,3 +24,6 @@ temp/
 # Ignore test files
 scratch*
 log.json
+
+# Ignore dist folder
+dist/

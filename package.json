@@ -16,7 +16,21 @@
 		"less": "3.0.0",
 		"nedb": "~1.8.0"
 	},
+	"devDependencies": {
+		"nwjs-builder-phoenix": "^1.14.6"
+	},
+	"build": {
+		"nwVersion": "0.14.7",
+		"excludes": [
+			"*sublime*",
+			"temp/",
+			"**/temp/*",
+			"scratch*",
+			"**/*.fuse*"
+		]
+	},
 	"scripts": {
-		"start": "nw ."
+		"dist": "build --tasks win-x86 --mirror https://dl.nwjs.io/ .",
+		"start": "run --x86 --mirror https://dl.nwjs.io/ ."
 	}
 }
