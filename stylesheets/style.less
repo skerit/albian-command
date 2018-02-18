@@ -96,10 +96,6 @@ a {
 		padding: 0 10px 10px;
 	}
 
-	.action.mousedown {
-		background-color: lighten(@color-main-bg, 35%);
-	}
-
 	tbody:nth-child(odd) tr {
 		background-color: @color-tr-odd;
 
@@ -202,6 +198,10 @@ table {
 	}
 }
 
+.creatures-generic-actions .actions-row td {
+	padding: 1rem 0 !important;
+}
+
 .action {
 	.flexParent(column);
 	padding: 1rem;
@@ -221,6 +221,10 @@ table {
 	span {
 		display: inline-block;
 		margin-top: 1rem;
+	}
+
+	&.mousedown {
+		background-color: lighten(@color-main-bg, 35%);
 	}
 }
 

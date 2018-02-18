@@ -131,8 +131,8 @@ ACom.prepareProperty(function all_creature_actions_row() {
 	row.classList.add('actions-row');
 	row.appendChild(column);
 
-	// export_all = this.createActionElement('Export All', 'boin.s16', 0);
-	// column.appendChild(export_all);
+	export_all = this.createActionElement('Export All', 'boin.s16', 0);
+	column.appendChild(export_all);
 
 	return row;
 });
@@ -235,6 +235,19 @@ ACom.setMethod(function init() {
 		if ($jsvalues.length) {
 			that.applyJsValues($jsvalues, target);
 		}
+	});
+
+	// Listen for errors
+	this.capp.on('error_dialogbox', function gotDialogError(data, callback, last_error) {
+
+		if (!that.getSetting('close_dialog_boxes')) {
+			alert('A dialog box has appeared, please close it manually');
+			callback();
+			return;
+		}
+
+		// The setting is on, so tell it to close it!
+		callback({type: 'close'});
 	});
 
 	setInterval(function doUpdate() {
@@ -746,30 +759,56 @@ ACom.setAfterMethod('ready', function loadCreaturesTab(element) {
 ACom.setMethod(function doExportAllAction() {
 
 	var that = this,
-	    tasks;
+	    tasks = [],
+	    now = Date.now();
 
 	// Make the user choose a directory to export to
-	chooseDirectory(function done(err, path) {
+	chooseDirectory(function done(err, dirpath) {
 
 		if (err) {
 			return alert('Error: ' + err);
 		}
 
-		if (!path) {
+		if (!dirpath) {
 			return;
 		}
 
 		that.getCreatures(function gotCreatures(err, creatures) {
 
-			console.log('Got...', err, creatures)
-
 			if (err) {
-				throw err;
+				return alert('Error: ' + err);
 			}
 
-			creatures.forEach(function eachCreature(creature) {
+			creatures.forEach(function eachCreature(creature, index) {
 
-				console.log('Should export', creature.moniker);
+				var export_path,
+				    filename;
+
+				filename = [
+					creature.generation,
+					creature.gender,
+					creature.name.slug(),
+					creature.moniker,
+					creature.age_for_filename,
+					now
+				].join('_');
+
+				export_path = libpath.resolve(dirpath, filename);
+
+				tasks.push(function doExport(next) {
+					creature.exportTo(export_path, function exported(err, result) {
+						next(err, result);
+					})
+				});
+			});
+
+			console.log('Executing', tasks.length, 'export actions');
+
+			Function.series(tasks, function exportedAll(err, results) {
+
+				if (err) {
+					return alert('Export error: ' + err);
+				}
 
 			});
 		});
@@ -1296,8 +1335,6 @@ ACom.setAfterMethod('ready', function getCreatures(callback) {
 	var that = this,
 	    remember_names = false;
 
-	console.log('Getcreatures callback = ', callback);
-
 	if (!callback) {
 		callback = Function.thrower;
 	}
@@ -1312,8 +1349,6 @@ ACom.setAfterMethod('ready', function getCreatures(callback) {
 			remember_names = true;
 		}
 	}
-
-	console.log('Asking capp');
 
 	// Get the actual creatures
 	capp.getCreatures(function gotCreatures(err, creatures) {
@@ -1603,6 +1638,12 @@ ACom.addSetting('imported_names', {
 
 ACom.addSetting('make_creatures_remember_their_name', {
 	title   : 'Make Creatures remember their name',
+	type    : 'boolean',
+	default : true
+});
+
+ACom.addSetting('close_dialog_boxes', {
+	title   : 'Automatically close error dialog boxes',
 	type    : 'boolean',
 	default : true
 });

@@ -1,4 +1,5 @@
 var less_options,
+    focus_waiter,
     is_dev_mode,
     machine_id,
     process_id,
@@ -60,6 +61,49 @@ win.on('new-win-policy', function onNewWindowRequest(frame, url, policy) {
 	gui.Shell.openExternal(url);
 	policy.ignore();
 });
+
+window.addEventListener('focus', function onFocus(e) {
+	if (focus_waiter) {
+		Blast.setImmediate(focus_waiter);
+		focus_waiter = null;
+	}
+});
+
+/**
+ * Choose a directory
+ *
+ * @author   Jelle De Loecker   <jelle@develry.be>
+ * @since    0.1.1
+ * @version  0.1.1
+ */
+function chooseDirectory(callback) {
+	var chooser = document.createElement('input'),
+	    value;
+
+	chooser.setAttribute('type', 'file');
+	chooser.setAttribute('nwdirectory', 'nwdirectory');
+
+	chooser.addEventListener('change', function onChange(e) {
+		value = this.value;
+
+		if (!callback) {
+			return console.error('Callback already nullified!');
+		}
+
+		callback(null, value);
+		callback = null;
+	});
+
+	focus_waiter = function documentGotFocus() {
+		setTimeout(function doCallback() {
+			if (callback) {
+				callback(null);
+			}
+		}, 500);
+	};
+
+	chooser.click();
+}
 
 /**
  * Create an object id
