@@ -125,7 +125,8 @@ ACom.prepareProperty(function all_creature_actions_row() {
 
 	var row = document.createElement('tr'),
 	    column = document.createElement('td'),
-	    export_all;
+	    export_all,
+	    import_all;
 
 	// Indicate this is the actions row
 	row.classList.add('actions-row');
@@ -133,6 +134,9 @@ ACom.prepareProperty(function all_creature_actions_row() {
 
 	export_all = this.createActionElement('Export All', 'boin.s16', 0);
 	column.appendChild(export_all);
+
+	import_all = this.createActionElement('Import All', 'pod_.s16', 1);
+	column.appendChild(import_all);
 
 	return row;
 });
@@ -750,11 +754,69 @@ ACom.setAfterMethod('ready', function loadCreaturesTab(element) {
 });
 
 /**
+ * Import all the creatures from a given folder
+ *
+ * @author   Jelle De Loecker   <jelle@develry.be>
+ * @since    0.1.1
+ * @version  0.1.1
+ */
+ACom.setMethod(function doImportAllAction() {
+
+	var that = this,
+	    tasks = [];
+
+	// Make the user choose a directory to import from
+	chooseDirectory(function done(err, dirpath) {
+
+		if (err) {
+			return alert('Error choosing directory: ' + err);
+		}
+
+		if (!dirpath) {
+			return;
+		}
+
+		fs.readdir(dirpath, function gotFiles(err, files) {
+
+			if (err) {
+				return alert('Error reading directory: ' + err);
+			}
+
+			files.forEach(function eachFile(file) {
+
+				var lower_file = file.toLowerCase(),
+				    filepath;
+
+				if (!lower_file.endsWith('.exp')) {
+					return;
+				}
+
+				filepath = libpath.resolve(dirpath, file);
+
+				tasks.push(function doImport(next) {
+					that.capp.importCreature(filepath, next);
+				});
+			});
+
+			Function.series(tasks, function done(err, results) {
+
+				if (err) {
+					alert('Error importing: ' + err);
+				}
+
+				console.log('Import finished:', err, results);
+
+			});
+		});
+	});
+});
+
+/**
  * Export all the creatures
  *
  * @author   Jelle De Loecker   <jelle@develry.be>
- * @since    0.1.0
- * @version  0.1.0
+ * @since    0.1.1
+ * @version  0.1.1
  */
 ACom.setMethod(function doExportAllAction() {
 
@@ -1252,11 +1314,11 @@ ACom.setAfterMethod('ready', function loadSpritesTab(sprites_element) {
 		return;
 	}
 
-	this.has_s16_listener = true;
-
 	checkAppears = elementAppears('new-s16', {live: true}, function onS16C(element) {
 		element.showImage(0);
 	});
+
+	this.has_s16_listener = checkAppears;
 
 	function gotFiles(type, err, files) {
 
@@ -1293,7 +1355,7 @@ ACom.setAfterMethod('ready', function loadSpritesTab(sprites_element) {
 			coll.s16 = file;
 		});
 
-		checkAppears();
+		that.has_s16_listener();
 	}
 });
 
