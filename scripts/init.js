@@ -95,11 +95,13 @@ function chooseDirectory(callback) {
 	});
 
 	focus_waiter = function documentGotFocus() {
+
 		setTimeout(function doCallback() {
 			if (callback) {
+				console.log('chooseDirectory timeout, no choice made? Value is', chooser.value);
 				callback(null);
 			}
-		}, 500);
+		}, 1000);
 	};
 
 	chooser.click();
