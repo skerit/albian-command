@@ -790,8 +790,6 @@ ACom.setMethod(function doImportAllAction() {
 		// Make the user choose a directory to import from
 		chooseDirectory(function done(err, dirpath) {
 
-			console.log('CHOOSE DIR??', err, dirpath)
-
 			if (err) {
 				return next(err);
 			}
@@ -1671,6 +1669,16 @@ ACom.setMethod(function _initCreature(creature, callback) {
 
 	// When the creature is updated, update the info on screen
 	creature.on('updated', updateCreature);
+
+	// When the creature is removed, so should the elements
+	creature.once('removed', function whenRemoved() {
+
+		// Unset the elements
+		creature.acom_elements = null;
+
+		// Remove the row
+		els.tbody.remove();
+	});
 
 	// The update function
 	function updateCreature(callback) {
