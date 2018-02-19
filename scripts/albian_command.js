@@ -763,25 +763,60 @@ ACom.setAfterMethod('ready', function loadCreaturesTab(element) {
 ACom.setMethod(function doImportAllAction() {
 
 	var that = this,
-	    tasks = [];
+	    tasks = [],
+	    monikers = [],
+	    chosen_dir;
 
-	// Make the user choose a directory to import from
-	chooseDirectory(function done(err, dirpath) {
-
-		if (err) {
-			return alert('Error choosing directory: ' + err);
+	Function.parallel(function loadCreatures(next) {
+		// If it is allowed, we don't need to get the monikers
+		if (that.getSetting('import_duplicate_moniker_creature')) {
+			return next();
 		}
 
-		if (!dirpath) {
+		// Get all creatures so we can get their monikers
+		that.getCreatures(function gotCreatures(err, creatures) {
+
+			if (err) {
+				return next(err);
+			}
+
+			creatures.forEach(function eachCreature(creature) {
+				monikers.push(creature.moniker);
+			});
+
+			next();
+		});
+	}, function getDirectory(next) {
+		// Make the user choose a directory to import from
+		chooseDirectory(function done(err, dirpath) {
+
+			console.log('CHOOSE DIR??', err, dirpath)
+
+			if (err) {
+				return next(err);
+			}
+
+			chosen_dir = dirpath;
+			next();
+		});
+	}, function done(err) {
+
+		if (err) {
+			return alert('Error importing directory: ' + err);
+		}
+
+		if (!chosen_dir) {
 			return;
 		}
 
-		fs.readdir(dirpath, function gotFiles(err, files) {
+		// Read in the directory
+		fs.readdir(chosen_dir, function gotFiles(err, files) {
 
 			if (err) {
 				return alert('Error reading directory: ' + err);
 			}
 
+			// Iterate over the files
 			files.forEach(function eachFile(file) {
 
 				var lower_file = file.toLowerCase(),
@@ -791,10 +826,26 @@ ACom.setMethod(function doImportAllAction() {
 					return;
 				}
 
-				filepath = libpath.resolve(dirpath, file);
+				// Resolve the full path to the export file
+				filepath = libpath.resolve(chosen_dir, file);
 
+				// Add a new task
 				tasks.push(function doImport(next) {
-					that.capp.importCreature(filepath, next);
+					// Load the export file first
+					that.capp.loadExport(filepath, function loaded(err, creature_export) {
+
+						if (err) {
+							return next(err);
+						}
+
+						// Skip creatures in the monikers table
+						if (monikers.indexOf(creature_export.moniker) > -1) {
+							console.log('Skipping', creature_export.moniker, 'because it is already in the world');
+							return next();
+						}
+
+						that.capp.importCreature(creature_export, next);
+					});
 				});
 			});
 
@@ -808,6 +859,7 @@ ACom.setMethod(function doImportAllAction() {
 
 			});
 		});
+
 	});
 });
 
@@ -1708,4 +1760,10 @@ ACom.addSetting('close_dialog_boxes', {
 	title   : 'Automatically close error dialog boxes',
 	type    : 'boolean',
 	default : true
+});
+
+ACom.addSetting('import_duplicate_moniker_creature', {
+	title   : 'Import creature even if they are already in the world',
+	type    : 'boolean',
+	default : false
 });
