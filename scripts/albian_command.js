@@ -16,6 +16,9 @@ var ACom = Function.inherits('Develry.Creatures.Base', function AlbianCommand() 
 	// Link to the creatures table
 	this.$list       = $('.creatures-list');
 
+	// Link to the eggs table
+	this.$egg_list   = $('.eggs-list');
+
 	// Link to the sidebar anchors
 	this.$sidelinks  = $('.sidebar a');
 
@@ -61,13 +64,22 @@ ACom.setStatic(function addSetting(name, options) {
 });
 
 /**
- * The name of the current world
+ * The table headers of the creatures list
  *
  * @author   Jelle De Loecker   <jelle@develry.be>
  * @since    0.1.0
  * @version  0.1.0
  */
 ACom.setProperty('creatures_headers', ['picture', 'name', 'age', 'lifestage', 'health', 'status', 'n', 'drive', 'moniker']);
+
+/**
+ * The table headers of the eggs list
+ *
+ * @author   Jelle De Loecker   <jelle@develry.be>
+ * @since    0.1.1
+ * @version  0.1.1
+ */
+ACom.setProperty('eggs_headers', ['picture', 'moniker', 'gender', 'stage', 'progress', 'status']);
 
 /**
  * The starting letters:
@@ -100,15 +112,15 @@ ACom.prepareProperty(function creature_options_row() {
 	column.setAttribute('colspan', this.creatures_headers.length);
 	row.appendChild(column);
 
-	pick_up = this.createActionElement('Pickup', 'syst.s16', 7);
+	pick_up = this.createActionElement('creature', 'Pickup', 'syst.s16', 7);
 	pick_up.dataset.click_image_index = 6;
 
 	column.appendChild(pick_up);
 
-	teleport = this.createActionElement('Teleport', 'tele.s16');
+	teleport = this.createActionElement('creature', 'Teleport', 'tele.s16');
 	column.appendChild(teleport);
 
-	language = this.createActionElement('Teach Language', 'acmp.s16');
+	language = this.createActionElement('creature', 'Teach Language', 'acmp.s16');
 	column.appendChild(language);
 
 	return row;
@@ -119,7 +131,7 @@ ACom.prepareProperty(function creature_options_row() {
  *
  * @author   Jelle De Loecker   <jelle@develry.be>
  * @since    0.1.0
- * @version  0.1.0
+ * @version  0.1.1
  */
 ACom.prepareProperty(function all_creature_actions_row() {
 
@@ -132,11 +144,62 @@ ACom.prepareProperty(function all_creature_actions_row() {
 	row.classList.add('actions-row');
 	row.appendChild(column);
 
-	export_all = this.createActionElement('Export All', 'boin.s16', 0);
+	export_all = this.createActionElement('creatures', 'Export All', 'boin.s16', 0);
 	column.appendChild(export_all);
 
-	import_all = this.createActionElement('Import All', 'pod_.s16', 1);
+	import_all = this.createActionElement('creatures', 'Import All', 'pod_.s16', 1);
 	column.appendChild(import_all);
+
+	return row;
+});
+
+/**
+ * The specific eggs actions row
+ *
+ * @author   Jelle De Loecker   <jelle@develry.be>
+ * @since    0.1.0
+ * @version  0.1.0
+ */
+ACom.prepareProperty(function egg_options_row() {
+
+	var row = document.createElement('tr'),
+	    column = document.createElement('td'),
+	    hatch,
+	    pause,
+	    resume;
+
+	// Indicate this is the actions row
+	row.classList.add('actions-row');
+
+	column.setAttribute('colspan', this.eggs_headers.length);
+	row.appendChild(column);
+
+	hatch = this.createActionElement('egg', 'Hatch', 'eggs.s16', 7);
+	column.appendChild(hatch);
+
+	resume = this.createActionElement('egg', 'Resume', 'eggs.s16', 6);
+	column.appendChild(resume);
+
+	pause = this.createActionElement('egg', 'Pause', 'eggs.s16', 1);
+	column.appendChild(pause);
+
+	return row;
+});
+
+/**
+ * The generic eggs actions row
+ *
+ * @author   Jelle De Loecker   <jelle@develry.be>
+ * @since    0.1.1
+ * @version  0.1.1
+ */
+ACom.prepareProperty(function all_eggs_actions_row() {
+	var row = document.createElement('tr'),
+	    column = document.createElement('td');
+
+	// Indicate this is the actions row
+	row.classList.add('actions-row');
+	row.appendChild(column);
 
 	return row;
 });
@@ -200,6 +263,9 @@ ACom.setMethod(function init() {
 	// Load in the creatures
 	this.getCreatures();
 
+	// Load in the eggs
+	this.getEggs();
+
 	// Listen to speed range changes
 	this.$speed.on('input', Function.throttle(function onChange(e) {
 		var new_value = this.value / 10;
@@ -256,7 +322,7 @@ ACom.setMethod(function init() {
 
 	setInterval(function doUpdate() {
 		that.update();
-	}, 15000);
+	}, 5000);
 });
 
 /**
@@ -395,6 +461,7 @@ ACom.setMethod(function update(callback) {
 	this.emit('updating', function doUpdate() {
 
 		that.getCreatures();
+		that.getEggs();
 
 		that.emit('updated');
 	});
@@ -436,13 +503,24 @@ ACom.setMethod(function getCreature(id_or_moniker, callback) {
 });
 
 /**
+ * Get an egg
+ *
+ * @author   Jelle De Loecker   <jelle@develry.be>
+ * @since    0.1.1
+ * @version  0.1.1
+ */
+ACom.setMethod(function getEgg(id_or_moniker, callback) {
+	return this.capp.getEgg(id_or_moniker, callback);
+});
+
+/**
  * Create an action element
  *
  * @author   Jelle De Loecker   <jelle@develry.be>
  * @since    0.1.0
- * @version  0.1.0
+ * @version  0.1.1
  */
-ACom.setMethod(function createActionElement(title, s16_name, index) {
+ACom.setMethod(function createActionElement(type, title, s16_name, index) {
 
 	var that = this,
 	    wrapper_el = document.createElement('div'),
@@ -465,6 +543,10 @@ ACom.setMethod(function createActionElement(title, s16_name, index) {
 
 	method_name = 'do' + title.camelize() + 'Action';
 
+	if (typeof that[method_name] != 'function') {
+		method_name = 'do' + title.camelize() + type.camelize() + 'Action';
+	}
+
 	wrapper_el.addEventListener('mousedown', function onDown(e) {
 
 		wrapper_el.classList.add('mousedown');
@@ -482,15 +564,27 @@ ACom.setMethod(function createActionElement(title, s16_name, index) {
 			var moniker = $(wrapper_el).parents('[data-moniker]').first().attr('data-moniker');
 
 			if (moniker) {
-				that.getCreature(moniker, function gotCreature(err, creature) {
+				if (type == 'creature') {
+					that.getCreature(moniker, function gotCreature(err, creature) {
 
-					if (err) {
-						throw err;
-					}
+						if (err) {
+							throw err;
+						}
 
-					wrapper_el.creature = creature;
-					that[method_name](wrapper_el, creature);
-				});
+						wrapper_el.creature = creature;
+						that[method_name](wrapper_el, creature);
+					});
+				} else if (type == 'egg') {
+					that.getEgg(moniker, function gotEgg(err, egg) {
+
+						if (err) {
+							throw err;
+						}
+
+						wrapper_el.egg = egg;
+						that[method_name](wrapper_el, egg);
+					});
+				}
 			} else {
 				wrapper_el.creature = null;
 				that[method_name](wrapper_el);
@@ -637,6 +731,60 @@ ACom.setMethod(function doTeleportAction(action_element, creature) {
 });
 
 /**
+ * Hatch this egg
+ *
+ * @author   Jelle De Loecker   <jelle@develry.be>
+ * @since    0.1.1
+ * @version  0.1.1
+ */
+ACom.setMethod(function doHatchAction(action_element, egg) {
+
+	var that = this;
+
+	egg.hatch(function hatched(err) {
+		if (err) {
+			alert('Error hatching egg: ' + err);
+		}
+	});
+});
+
+/**
+ * Pause this egg
+ *
+ * @author   Jelle De Loecker   <jelle@develry.be>
+ * @since    0.1.1
+ * @version  0.1.1
+ */
+ACom.setMethod(function doPauseEggAction(action_element, egg) {
+
+	var that = this;
+
+	egg.pause(function paused(err) {
+		if (err) {
+			alert('Error pausing egg: ' + err);
+		}
+	});
+});
+
+/**
+ * Resume this egg
+ *
+ * @author   Jelle De Loecker   <jelle@develry.be>
+ * @since    0.1.1
+ * @version  0.1.1
+ */
+ACom.setMethod(function doResumeEggAction(action_element, egg) {
+
+	var that = this;
+
+	egg.resume(function resumed(err) {
+		if (err) {
+			alert('Error resuming egg: ' + err);
+		}
+	});
+});
+
+/**
  * Get favourite locations in the current world
  *
  * @author   Jelle De Loecker   <jelle@develry.be>
@@ -739,7 +887,7 @@ ACom.setMethod(function getSetting(name) {
  * Load the creatures tab
  *
  * @author   Jelle De Loecker   <jelle@develry.be>
- * @since    0.1.1
+ * @since    0.1.0
  * @version  0.1.1
  */
 ACom.setAfterMethod('ready', function loadCreaturesTab(element) {
@@ -751,6 +899,25 @@ ACom.setAfterMethod('ready', function loadCreaturesTab(element) {
 		general_actions_table = element.querySelector('.creatures-generic-actions');
 		general_actions_table.appendChild(general_actions_row);
 	}
+});
+
+/**
+ * Load the eggs tab
+ *
+ * @author   Jelle De Loecker   <jelle@develry.be>
+ * @since    0.1.1
+ * @version  0.1.1
+ */
+ACom.setAfterMethod('ready', function loadEggsTab(element) {
+
+	var general_actions_row = this.all_eggs_actions_row,
+	    general_actions_table;
+
+	if (!general_actions_row.parentElement) {
+		general_actions_table = element.querySelector('.eggs-generic-actions');
+		general_actions_table.appendChild(general_actions_row);
+	}
+
 });
 
 /**
@@ -1496,6 +1663,47 @@ ACom.setAfterMethod('ready', function getCreatures(callback) {
 });
 
 /**
+ * Get all the eggs in the current world
+ *
+ * @author   Jelle De Loecker   <jelle@develry.be>
+ * @since    0.1.1
+ * @version  0.1.1
+ */
+ACom.setAfterMethod('ready', function getEggs(callback) {
+
+	var that = this;
+
+	if (!callback) {
+		callback = Function.thrower;
+	}
+
+	// Get the actual creatures
+	capp.getEggs(function gotCreatures(err, eggs) {
+
+		var tasks = [];
+
+		if (err) {
+			return callback(err);
+		}
+
+		eggs.forEach(function eachEgg(egg) {
+			tasks.push(function doEgg(next) {
+				that._initEgg(egg, next);
+			});
+		});
+
+		Function.parallel(tasks, function done(err) {
+
+			if (err) {
+				return callback(err);
+			}
+
+			callback(null, eggs);
+		});
+	});
+});
+
+/**
  * Teach the creature language
  *
  * @author   Jelle De Loecker   <jelle@develry.be>
@@ -1588,6 +1796,8 @@ ACom.setMethod(function nameCreature(creature, callback) {
 
 				callback();
 			});
+		} else {
+			console.warn('Found no name for', creature.moniker);
 		}
 
 	});
@@ -1731,6 +1941,7 @@ ACom.setMethod(function _initCreature(creature, callback) {
 				callback();
 			}
 		} else {
+
 			// Add a name!
 			if (creature.is_in_world && that.getSetting('name_creatures')) {
 				that.nameCreature(creature, function done() {
@@ -1742,6 +1953,119 @@ ACom.setMethod(function _initCreature(creature, callback) {
 				callback();
 			}
 		}
+	}
+});
+
+/**
+ * Add the given egg to the list
+ *
+ * @author   Jelle De Loecker   <jelle@develry.be>
+ * @since    0.1.1
+ * @version  0.1.1
+ */
+ACom.setMethod(function _initEgg(egg, callback) {
+
+	var that = this,
+	    updating,
+	    egg_img,
+	    $row,
+	    els;
+
+	els = egg.acom_elements;
+
+	if (els) {
+		if (callback) {
+			egg.afterOnce('updated', callback);
+		}
+		return;
+	}
+
+	egg.acom_elements = els = {};
+
+	// Create the tbody element
+	els.tbody = document.createElement('tbody');
+
+	// Create the row element
+	els.row = document.createElement('tr');
+	els.$row = $row = $(els.row);
+
+	// Add the row to the tbody
+	els.tbody.appendChild(els.row);
+
+	// Add the moniker
+	els.row.dataset.moniker = egg.moniker;
+	els.tbody.dataset.moniker = egg.moniker;
+
+	// Add all the egg header elements
+	this.eggs_headers.forEach(function eachName(name) {
+
+		var td = document.createElement('td');
+
+		// Add the name as a class
+		td.classList.add('field-' + name);
+
+		// Store the element under the given name
+		els[name] = td;
+
+		// And add it to the row
+		els.row.appendChild(td);
+	});
+
+	// Add the row to the screen
+	this.$egg_list.append(els.tbody);
+
+	// Listen to clicks on the row
+	$row.on('click', function onClick(e) {
+
+		var corow = that.egg_options_row;
+
+		// Set the moniker
+		corow.dataset.moniker = egg.moniker;
+
+		// Insert it after the current creature's row
+		$row.after(corow);
+	});
+
+	// Create the egg image (we use the first egg image for now)
+	egg_img = document.createElement('s16-image');
+	egg_img.s16 = 'eggs.s16';
+	egg_img.image_index = 0;
+	els.picture.appendChild(egg_img);
+
+	// Initial update
+	updateEgg();
+
+	// When the egg is removed, so should the elements
+	// type is "hatched" or nothing
+	// If it is hatched, "creature" will be the hatched creature
+	egg.once('removed', function whenRemoved(type, creature) {
+
+		// Unset the elements
+		egg.acom_elements = null;
+
+		// Remove the row
+		els.tbody.remove();
+	});
+
+	// Listen for egg updates
+	egg.on('updated', function whenRemoved(type, egg) {
+		updateEgg();
+	});
+
+	function updateEgg() {
+
+		els.moniker.textContent = egg.moniker;
+		els.gender.textContent = egg.gender;
+
+		els.stage.textContent = egg.stage;
+		els.stage.dataset.sortValue = egg.stage;
+
+		els.progress.textContent = egg.tick_progress;
+		els.progress.dataset.sortValue = egg.tick_progress;
+
+		egg_img.image_index = egg.stage;
+
+		els.status.textContent = egg.paused ? 'Paused' : '';
 	}
 });
 

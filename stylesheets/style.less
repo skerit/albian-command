@@ -75,9 +75,19 @@ a {
 		font-size: 1.5rem;
 		min-width: 92%;
 
+		s16-image {
+			margin: -1rem;
+			display: inline-block;
+			-webkit-filter: grayscale(1);
+		}
+
 		&:hover,
 		&.active {
 			background-color: @color-anchor-bg;
+
+			s16-image {
+				-webkit-filter: initial;
+			}
 		}
 	}
 
@@ -91,6 +101,7 @@ a {
 	.flexParent();
 }
 
+.eggs-list,
 .creatures-list {
 	.creatures-thead th:not(:empty) {
 		padding: 0 10px 10px;
@@ -143,6 +154,11 @@ a {
 		text-align: right !important;
 		padding-right: 11px !important;
 	}
+}
+
+#eggs .field-moniker {
+	text-align: left !important;
+	padding-right: 0.5rem !important;
 }
 
 table {
