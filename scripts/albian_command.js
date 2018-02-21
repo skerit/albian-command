@@ -1914,7 +1914,7 @@ ACom.setMethod(function _initCreature(creature, callback) {
 		els.lifestage.textContent = creature.lifestage;
 		els.lifestage.dataset.sortValue = creature.agen;
 
-		els.health.textContent = ~~(creature.health / 2) + '%';
+		els.health.textContent = ~~(creature.health / 2.56) + '%';
 		els.health.dataset.sortValue = creature.health;
 
 		if (creature.has_name) {
