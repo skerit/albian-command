@@ -14,6 +14,7 @@
 			}
 		</style>
 		<link rel="stylesheet" href="stylesheets/jquery.contextmenu.css"></link>
+		<link rel="stylesheet" href="stylesheets/fa-svg-with-js.css"></link>
 
 		<script src="scripts/init.js"></script>
 		<script src="scripts/jquery.js"></script>
@@ -22,6 +23,8 @@
 		<script src="elements/is_visible.js"></script>
 		<script src="elements/element_appears.js"></script>
 		<script src="elements/s16_element.js"></script>
+		<script src="elements/svg_element.js"></script>
+		<script src="scripts/fontawesome-all.js"></script>
 	</head>
 	<body>
 		<div class="cage">
@@ -30,13 +33,37 @@
 				<div class="links">
 					<a href="#creatures">
 						<!--<s16-image s16="a00h.s16" image-index="0"></s16-image>-->
+						<i class="fas fa-users"></i>
 						Creatures
 					</a>
-					<a href="#eggs">Eggs</a>
-					<a href="#sprites">Sprites</a>
-					<a href="#settings">Settings</a>
-					<a href="#names">Names</a>
-					<a href="#about">About</a>
+					<div class="children">
+						<a href="#stored">
+							<i class="fas fa-download"></i>
+							Stored
+						</a>
+					</div>
+					<a href="#eggs">
+						<x-svg src="eggs.svg"></x-svg>
+						Eggs
+					</a>
+					<a href="#sprites">
+						<i class="fas fa-images"></i>
+						Sprites
+					</a>
+					<a href="#settings">
+						<i class="fas fa-wrench"></i>
+						Settings
+					</a>
+					<div class="children">
+						<a href="#names">
+							<i class="fas fa-list-alt"></i>
+							Names
+						</a>
+					</div>
+					<a href="#about">
+						<i class="fas fa-wifi"></i>
+						Network
+					</a>
 				</div>
 				<div class="bottombuttons">
 					<div>
@@ -107,16 +134,36 @@
 					<span class="version" js-value="package.version"></span>
 					<br>
 					<p>
-						An application to monitor your Creatures 2 norns.
-					</p>
-					<p>
 						More information is available on
 						<a
 							target="_blank"
-							href="https://github.com/skerit/albian_command"
+							href="https://github.com/skerit/albian-command"
 						>
-							https://github.com/skerit/albian_command
+							https://github.com/skerit/albian-command
 						</a>
+					</p>
+					<br>
+					<p>
+						Albian-Babel Network Status
+					</p>
+					<div class="tilerow">
+						<div class="tile">
+							<span class="blocks" js-value="babel.block_count"></span>
+							out of
+							<span class="blocks" js-value="babel.network_block_count" js-value-default="?"></span>
+							blocks
+						</div>
+
+						<div class="tile">
+							<span class="blocks" js-value="babel.number_of_connections"></span>
+							connections
+						</div>
+					</div>
+
+					<div class="connect-to-network flex-center"></div>
+
+					<p style="text-align:center;margin-top:1rem">
+						Notice: If you're running Creatures in a VM you probably need to bridge your network instead of using NAT, or you might not be able to connect.
 					</p>
 				</div>
 			</main>

@@ -1,5 +1,6 @@
 var less_options,
     focus_waiter,
+    AlbianBabel,
     is_dev_mode,
     machine_id,
     process_id,
@@ -25,18 +26,25 @@ var less_options,
 // Error catcher
 window.addEventListener('error', function onError(event) {
 	if (is_dev_mode) {
-		return console.error('Uncaught error:', event);
+		return console.error('Uncaught error:', event.error);
 	}
 	debug('Uncaught Error in: "' + event.filename + ' @ ' + event.lineno, event.message);
 });
+
+// Only meant for older nwjs versions, newer ones also have NaCl
+is_dev_mode = window.navigator.plugins.namedItem('Native Client') !== null;
 
 package = require('./package.json');
 
 // Monkey-patch fs please
 fs.gracefulify(realfs);
 
+console.log('Requiring Background Protoblast...');
+
 // Enable global protoblast in the node.js context
 temp = require('creatures/node_modules/protoblast')(true);
+
+console.log('Background Protoblast has loaded');
 
 // Get the Blast path for in the browser context
 temp = temp.getClientPath();
@@ -44,9 +52,6 @@ temp = temp.getClientPath();
 // Just eval it, document.write is no longer synchronous
 eval(fs.readFileSync(temp, 'utf8'));
 Blast = __Protoblast;
-
-// Only meant for older nwjs versions, newer ones also have NaCl
-is_dev_mode = window.navigator.plugins.namedItem('Native Client') !== null;
 
 exec_dir = libpath.dirname(process.execPath);
 
@@ -207,6 +212,9 @@ less.render(fs.readFileSync('./stylesheets/style.less', 'utf8'), less_options, f
 
 // Require the creatures class
 Creatures = require('creatures');
+
+// Require Albian Babel network
+AlbianBabel = require('albian-babel');
 
 // Create the Creatures application instance
 capp = new Creatures();

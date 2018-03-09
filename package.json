@@ -14,7 +14,8 @@
 	"dependencies": {
 		"creatures": "~0.2.0",
 		"less": "3.0.0",
-		"nedb": "~1.8.0"
+		"nedb": "~1.8.0",
+		"msgpack": "~1.0.0"
 	},
 	"devDependencies": {
 		"nwjs-builder-phoenix": "^1.14.6"

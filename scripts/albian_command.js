@@ -1,3 +1,5 @@
+var nwgui = require('nw.gui');
+
 /**
  * The Albian Command class
  *
@@ -9,6 +11,9 @@ var ACom = Function.inherits('Develry.Creatures.Base', function AlbianCommand() 
 
 	// capp is defined in the init.js file, but we make an alias here
 	this.capp = capp;
+
+	// Create an albian-babel network instance here
+	this.babel = new AlbianBabel();
 
 	// Link to the worldname element
 	this.$world_name = $('#worldname');
@@ -40,11 +45,20 @@ var ACom = Function.inherits('Develry.Creatures.Base', function AlbianCommand() 
 	// Default values
 	this.speed = 1;
 
+	// Various paths
+	this.paths = {
+		exports       : this.resolvePath('export'),
+		local_exports : this.resolvePath(['export', 'local']),
+		warp_exports  : this.resolvePath(['export', 'warp'])
+	};
+
 	// Models
 	this.Setting = this.getModel('Setting');
 	this.Name = this.getModel('Name');
 
 	this.init();
+
+	console.log('Created AlbianCommand instance:', this);
 });
 
 /**
@@ -92,6 +106,37 @@ ACom.setProperty('eggs_headers', ['picture', 'moniker', 'gender', 'stage', 'prog
 ACom.setProperty('letters', Array.range(65, 91).map(function(v) {return String.fromCharCode(v)}));
 
 /**
+ * The user's password
+ *
+ * @author   Jelle De Loecker   <jelle@develry.be>
+ * @since    0.1.0
+ * @version  0.1.0
+ */
+ACom.setProperty(function babel_password() {
+	return this.getSetting('albian_babel_network_password') || '';
+}, function setBabelPassword(password) {
+	return this.setSetting('albian_babel_network_password', password);
+});
+
+/**
+ * The user's username
+ *
+ * @author   Jelle De Loecker   <jelle@develry.be>
+ * @since    0.1.0
+ * @version  0.1.0
+ */
+ACom.setProperty(function babel_username() {
+	return this.getSetting('albian_babel_network_username') || '';
+}, function setBabelUsername(username) {
+
+	if (this.babel_username) {
+		console.warn('There already is a username defined!');
+	}
+
+	return this.setSetting('albian_babel_network_username', username);
+});
+
+/**
  * The specific creatures actions row
  *
  * @author   Jelle De Loecker   <jelle@develry.be>
@@ -112,15 +157,15 @@ ACom.prepareProperty(function creature_options_row() {
 	column.setAttribute('colspan', this.creatures_headers.length);
 	row.appendChild(column);
 
-	pick_up = this.createActionElement('creature', 'Pickup', 'syst.s16', 7);
+	pick_up = this.createActionElement('creature', 'pickup', 'Pickup', 'syst.s16', 7);
 	pick_up.dataset.click_image_index = 6;
 
 	column.appendChild(pick_up);
 
-	teleport = this.createActionElement('creature', 'Teleport', 'tele.s16');
+	teleport = this.createActionElement('creature', 'teleport', 'Teleport', 'tele.s16');
 	column.appendChild(teleport);
 
-	language = this.createActionElement('creature', 'Teach Language', 'acmp.s16');
+	language = this.createActionElement('creature', 'teach_language', 'Teach Language', 'acmp.s16');
 	column.appendChild(language);
 
 	return row;
@@ -137,18 +182,22 @@ ACom.prepareProperty(function all_creature_actions_row() {
 
 	var row = document.createElement('tr'),
 	    column = document.createElement('td'),
-	    export_all,
-	    import_all;
+	    import_all_from,
+	    export_all_to,
+	    export_all;
 
 	// Indicate this is the actions row
 	row.classList.add('actions-row');
 	row.appendChild(column);
 
-	export_all = this.createActionElement('creatures', 'Export All', 'boin.s16', 0);
+	export_all = this.createActionElement('creatures', 'export_all', 'Export all', 'boin.s16', 0);
 	column.appendChild(export_all);
 
-	import_all = this.createActionElement('creatures', 'Import All', 'pod_.s16', 1);
-	column.appendChild(import_all);
+	export_all_to = this.createActionElement('creatures', 'export_all_to', 'Export all to...', 'boin.s16', 0);
+	column.appendChild(export_all_to);
+
+	import_all_from = this.createActionElement('creatures', 'import_all', 'Import all from...', 'pod_.s16', 1);
+	column.appendChild(import_all_from);
 
 	return row;
 });
@@ -174,13 +223,13 @@ ACom.prepareProperty(function egg_options_row() {
 	column.setAttribute('colspan', this.eggs_headers.length);
 	row.appendChild(column);
 
-	hatch = this.createActionElement('egg', 'Hatch', 'eggs.s16', 7);
+	hatch = this.createActionElement('egg', 'hatch', 'Hatch', 'eggs.s16', 7);
 	column.appendChild(hatch);
 
-	resume = this.createActionElement('egg', 'Resume', 'eggs.s16', 6);
+	resume = this.createActionElement('egg', 'resume', 'Resume', 'eggs.s16', 6);
 	column.appendChild(resume);
 
-	pause = this.createActionElement('egg', 'Pause', 'eggs.s16', 1);
+	pause = this.createActionElement('egg', 'pause', 'Pause', 'eggs.s16', 1);
 	column.appendChild(pause);
 
 	return row;
@@ -249,7 +298,7 @@ ACom.setProperty(function speed() {
  *
  * @author   Jelle De Loecker   <jelle@develry.be>
  * @since    0.1.0
- * @version  0.1.0
+ * @version  0.1.1
  */
 ACom.setMethod(function init() {
 
@@ -274,7 +323,8 @@ ACom.setMethod(function init() {
 
 	this.$sidelinks.on('click', function onClick(e) {
 
-		var $jsvalues,
+		var $this = $(this),
+		    $jsvalues,
 		    target_id = this.getAttribute('href'),
 		    target    = document.querySelector(target_id),
 		    cbname;
@@ -282,10 +332,16 @@ ACom.setMethod(function init() {
 		e.preventDefault();
 
 		// Remove the active class from all sidebar links
-		$sidelinks.removeClass('active');
+		that.$sidelinks.removeClass('active');
+
+		// And all the children
+		$('.links .children').removeClass('active');
 
 		// Add active class to the clicked link
-		$(this).addClass('active');
+		$this.addClass('active');
+
+		// Add active to the children wrapper, if any
+		$this.parents('.children').addClass('active');
 
 		// Hide all tabs
 		$tabs.hide();
@@ -305,6 +361,30 @@ ACom.setMethod(function init() {
 		if ($jsvalues.length) {
 			that.applyJsValues($jsvalues, target);
 		}
+	});
+
+	// Listen for loggedin
+	this.on('loggedin', function onLoggedin(claimed) {
+
+		var transaction;
+
+		// If we logged in during a claim, the username will be set anyway
+		if (claimed) {
+			return;
+		}
+
+		if (that.babel_username) {
+			return;
+		}
+
+		// See if there's a transaction where we registered for a username
+		transaction = that.babel.peerpin.findClaimTransaction('username', that.babel.public_key);
+
+		if (!transaction || !transaction.data.value) {
+			return console.warn('Could not find username claim for this public key');
+		}
+
+		that.babel_username = transaction.data.value;
 	});
 
 	// Listen for errors
@@ -330,7 +410,7 @@ ACom.setMethod(function init() {
  *
  * @author   Jelle De Loecker   <jelle@develry.be>
  * @since    0.1.0
- * @version  0.1.0
+ * @version  0.1.1
  */
 ACom.setCacheMethod(function doAsyncInit() {
 
@@ -339,7 +419,9 @@ ACom.setCacheMethod(function doAsyncInit() {
 	this.all_names = {};
 	this.lower_names = [];
 
-	Function.series(function getSettings(next) {
+	Function.series(function setNetworkStorageDir(next) {
+		that.babel.setMainStorageDir(that.resolvePath('albian-babel'), next);
+	}, function getSettings(next) {
 		// Preload all the settings
 		that.Setting.find({}, function gotSettings(err, docs) {
 
@@ -352,6 +434,21 @@ ACom.setCacheMethod(function doAsyncInit() {
 			docs.forEach(function eachSetting(doc) {
 				that.settings[doc.name] = doc;
 			});
+
+			next();
+		});
+	}, function loginToNetwork(next) {
+		if (!that.babel_password) {
+			return next();
+		}
+
+		that.babel.login(that.babel_password, function loggedIn(err) {
+
+			if (err) {
+				console.warn('Failed to login:', err);
+			} else {
+				that.emit('loggedin');
+			}
 
 			next();
 		});
@@ -425,6 +522,7 @@ ACom.setCacheMethod(function doAsyncInit() {
 	}, function done(err) {
 
 		if (err) {
+			console.error(err);
 			throw err;
 		}
 
@@ -468,6 +566,49 @@ ACom.setMethod(function update(callback) {
 });
 
 /**
+ * Resolve a path in the user's data folder
+ *
+ * @author   Jelle De Loecker   <jelle@develry.be>
+ * @since    0.1.0
+ * @version  0.1.0
+ *
+ * @param    {String|Array}   paths
+ *
+ * @return   {String}
+ */
+ACom.setMethod(function resolvePath(paths) {
+
+	var result;
+
+	// Make sure the paths is an array
+	paths = Array.cast(paths);
+
+	// Add the datapath to the top
+	paths.unshift(nwgui.App.dataPath);
+
+	// And now resolve it
+	result = libpath.resolve.apply(libpath, paths);
+
+	return result;
+});
+
+/**
+ * Create a directory
+ *
+ * @author   Jelle De Loecker   <jelle@develry.be>
+ * @since    0.1.1
+ * @version  0.1.1
+ *
+ * @param    {String}   path
+ */
+ACom.setMethod(function createDirectory(path, callback) {
+
+	var that = this;
+
+	this.babel.peerpin.createDirectory(path, callback);
+});
+
+/**
  * Get a database
  *
  * @author   Jelle De Loecker   <jelle@develry.be>
@@ -483,7 +624,7 @@ ACom.setMethod(function getDatabase(name) {
 	if (!this.dbs[name]) {
 
 		this.dbs[name] = new NeDB({
-			filename : libpath.join(require('nw.gui').App.dataPath, name + '.json'),
+			filename : this.resolvePath(name + '.json'),
 			autoload : true
 		});
 	}
@@ -519,8 +660,14 @@ ACom.setMethod(function getEgg(id_or_moniker, callback) {
  * @author   Jelle De Loecker   <jelle@develry.be>
  * @since    0.1.0
  * @version  0.1.1
+ *
+ * @param    {String}   type      The context of the action (creature, egg, creatures, ...)
+ * @param    {String}   name      Internal name for the action, used to match the method
+ * @param    {String}   title     Title to show in the button
+ * @param    {String}   s16_name  The s16 to use as icon
+ * @param    {Number}   index     The index to use in the s16 image
  */
-ACom.setMethod(function createActionElement(type, title, s16_name, index) {
+ACom.setMethod(function createActionElement(type, name, title, s16_name, index) {
 
 	var that = this,
 	    wrapper_el = document.createElement('div'),
@@ -541,10 +688,14 @@ ACom.setMethod(function createActionElement(type, title, s16_name, index) {
 	s16_el.image_index = index;
 	title_el.textContent = title;
 
-	method_name = 'do' + title.camelize() + 'Action';
+	method_name = 'do' + name.camelize() + type.camelize() + 'Action';
+
+	console.log('Looking for', method_name);
 
 	if (typeof that[method_name] != 'function') {
-		method_name = 'do' + title.camelize() + type.camelize() + 'Action';
+		method_name = 'do' + name.camelize() + 'Action';
+
+		console.log('Now loking for', method_name)
 	}
 
 	wrapper_el.addEventListener('mousedown', function onDown(e) {
@@ -604,7 +755,7 @@ ACom.setMethod(function createActionElement(type, title, s16_name, index) {
 });
 
 /**
- * Apply js vlaues
+ * Apply js values and refresh them periodically
  *
  * @author   Jelle De Loecker   <jelle@develry.be>
  * @since    0.1.0
@@ -620,18 +771,67 @@ ACom.setMethod(function applyJsValues($elements, target) {
 		    value,
 		    cmd = $this.attr('js-value');
 
-		value = Object.path(that, cmd);
-
-		if (value == null) {
-			value = Object.path(window, cmd);
-		}
-
-		if (value == null) {
-			value = '';
-		}
-
-		$this.text(value);
+		return that.applyJsValueToElement(this, target);
 	});
+});
+
+/**
+ * Apply js value for 1 element and refresh them periodically
+ *
+ * @author   Jelle De Loecker   <jelle@develry.be>
+ * @since    0.1.0
+ * @version  0.1.0
+ */
+ACom.setMethod(function applyJsValueToElement(element, target) {
+
+	var that = this,
+	    def,
+	    cmd,
+	    tid;
+
+	if (element.has_js_value_timer) {
+		return;
+	}
+
+	cmd = element.getAttribute('js-value');
+	def = element.getAttribute('js-value-default');
+
+	element.has_js_value_listener = true;
+
+	tid = setInterval(function doUpdate() {
+		updateValue();
+	}, 2000);
+
+	function updateValue() {
+
+		var value;
+
+		// If this element has been removed, clear the timer
+		if (!document.body.contains(element)) {
+			element.has_js_value_timer = false;
+			clearInterval(tid);
+			return;
+		}
+
+		try {
+			value = Object.path(that, cmd);
+
+			if (value == null) {
+				value = Object.path(window, cmd);
+			}
+		} catch (err) {
+			console.warn('Error applying js-value "' + cmd + '"', err);
+		}
+
+		if (value == null) {
+			value = def || '';
+		}
+
+		element.textContent = value;
+	}
+
+	// Do an immediate update
+	updateValue();
 });
 
 /**
@@ -917,7 +1117,168 @@ ACom.setAfterMethod('ready', function loadEggsTab(element) {
 		general_actions_table = element.querySelector('.eggs-generic-actions');
 		general_actions_table.appendChild(general_actions_row);
 	}
+});
 
+/**
+ * Load the about/network tab
+ *
+ * @author   Jelle De Loecker   <jelle@develry.be>
+ * @since    0.1.0
+ * @version  0.1.1
+ */
+ACom.setAfterMethod('ready', function loadAboutTab(element) {
+
+	var that = this,
+	    connect_element = element.querySelector('.connect-to-network'),
+	    register_button,
+	    password_input,
+	    username_input,
+	    login_button,
+	    $connecting,
+	    username;
+
+	if (connect_element.innerHTML) {
+		return;
+	}
+
+	connect_element.innerHTML = `
+		<div class="connecting-info flex-center" style="display:none;">
+		</div>
+
+		<form id="register-network" class="flex-center">
+			<input type="text" class="username" placeholder="Username"><br>
+			<button class="register">Register on the network</button>
+		</form>
+
+		<br>
+
+		<form id="login-network" class="flex-center">
+			<input type="password" class="password" placeholder="Password"><br>
+			<button class="login">Login on the network</button>
+		</form>
+	`;
+
+	username_input = connect_element.querySelector('.username');
+	register_button = connect_element.querySelector('.register');
+
+	login_button = connect_element.querySelector('.login');
+	password_input = connect_element.querySelector('.password');
+
+	$connecting = $('.connecting-info', connect_element);
+
+	if (this.babel_password) {
+		password_input.value = this.babel_password;
+	}
+
+	register_button.addEventListener('click', function onClick(e) {
+
+		e.preventDefault();
+
+		// Get the input username
+		username = username_input.value.trim();
+
+		if (!username || username.length > 32) {
+			return alert('Please provide a valid username');
+		}
+
+		// Show the connecting-info div
+		$connecting.show();
+
+		// Hide all the forms
+		$('form', connect_element).hide();
+
+		// Set some text to know something's happening
+		$connecting.text('Attempting to register "' + username_input.value + '" ...');
+
+		// If no password is set, register the user
+		if (!that.babel_password) {
+			// Register on the network
+			that.babel.register(function registered(err, private_key) {
+
+				if (err) {
+					$connecting.text('Failed to register: ' + err);
+					return;
+				}
+
+				that.setSetting('albian_babel_network_password', that.babel.private_mnemonic);
+
+				$connecting.html('Registered! Please store your password somewhere safe:<br>' + that.babel.private_mnemonic);
+				connected();
+			});
+		} else {
+			// Login with this private key
+			that.babel.login(that.babel_password, function loggedin(err) {
+
+				if (err) {
+					$connecting.text('Failed to login: ' + err);
+					return;
+				}
+
+				connected();
+			});
+		}
+
+		function connected() {
+			that.babel.claimValue('username', username, function claimed(err, block) {
+
+				if (err) {
+					$connecting.text('Failed to claim username: ' + err);
+					return;
+				}
+
+				that.babel_username = username;
+				$connecting.text('Claimed username "' + username + '"');
+				that.emit('loggedin', true);
+			});
+		}
+	});
+
+	login_button.addEventListener('click', function onClick(e) {
+
+		var password,
+		    new_pass;
+
+		e.preventDefault();
+
+		password = password_input.value.trim();
+
+		if (password) {
+			if (password != that.babel_password) {
+				new_pass = true;
+			}
+		} else {
+			password = that.babel_password;
+		}
+
+		if (!password) {
+			return alert('Unable to login without a password');
+		}
+
+		that.babel.login(password, function loggedin(err) {
+
+			if (err) {
+				$connecting.text('Failed to login: ' + err);
+				return;
+			}
+
+			// If a new password was given, store it in the settings
+			if (new_pass) {
+				that.babel_username = '';
+				that.babel_password = password;
+			}
+
+			that.emit('loggedin');
+		});
+	});
+
+	this.after('loggedin', function onLoggedin() {
+
+		$connecting.show();
+		$connecting.text('Logged in as "' + (that.babel_username || that.babel.public_key) + '"');
+
+		// Hide all the forms
+		$('form', connect_element).hide();
+	});
 });
 
 /**
@@ -1029,13 +1390,99 @@ ACom.setMethod(function doImportAllAction() {
 });
 
 /**
- * Export all the creatures
+ * Export all the creatures to the given directory
+ *
+ * @author   Jelle De Loecker   <jelle@develry.be>
+ * @since    0.1.1
+ * @version  0.1.1
+ */
+ACom.setMethod(function exportAllTo(dirpath, callback) {
+
+	var that = this,
+	    tasks = [],
+	    now = Date.now();
+
+	if (!callback) {
+		callback = Function.thrower;
+	}
+
+	that.getCreatures(function gotCreatures(err, creatures) {
+
+		if (err) {
+			return callback(err);
+		}
+
+		creatures.forEach(function eachCreature(creature, index) {
+
+			var export_path,
+			    filename;
+
+			filename = [
+				creature.generation,
+				creature.gender,
+				creature.name.slug(),
+				creature.moniker,
+				creature.age_for_filename,
+				now
+			].join('_');
+
+			export_path = libpath.resolve(dirpath, filename);
+
+			tasks.push(function doExport(next) {
+				creature.exportTo(export_path, function exported(err, result) {
+					next(err, result);
+				})
+			});
+		});
+
+		Function.series(tasks, function exportedAll(err, results) {
+
+			if (err) {
+				return callback(err);
+			}
+
+			return callback(null);
+		});
+	});
+});
+
+/**
+ * Export all the creatures to the local directory
  *
  * @author   Jelle De Loecker   <jelle@develry.be>
  * @since    0.1.1
  * @version  0.1.1
  */
 ACom.setMethod(function doExportAllAction() {
+
+	var that = this;
+
+	console.log('Exporting all to', this.paths.local_exports);
+
+	this.createDirectory(this.paths.local_exports, function created(err) {
+
+		if (err) {
+			return alert('Error creating directory: ' + err);
+		}
+
+		that.exportAllTo(that.paths.local_exports, function exported(err) {
+
+			if (err) {
+				return alert('Error exporting: ' + err);
+			}
+
+		});
+	});
+});
+
+/**
+ * Export all the creatures to a certain directory
+ *
+ * @author   Jelle De Loecker   <jelle@develry.be>
+ * @since    0.1.1
+ * @version  0.1.1
+ */
+ACom.setMethod(function doExportAllToAction() {
 
 	var that = this,
 	    tasks = [],
@@ -1052,44 +1499,12 @@ ACom.setMethod(function doExportAllAction() {
 			return;
 		}
 
-		that.getCreatures(function gotCreatures(err, creatures) {
+		that.exportAllTo(dirpath, function done(err) {
 
 			if (err) {
-				return alert('Error: ' + err);
+				return alert('Error exporting: ' + err);
 			}
 
-			creatures.forEach(function eachCreature(creature, index) {
-
-				var export_path,
-				    filename;
-
-				filename = [
-					creature.generation,
-					creature.gender,
-					creature.name.slug(),
-					creature.moniker,
-					creature.age_for_filename,
-					now
-				].join('_');
-
-				export_path = libpath.resolve(dirpath, filename);
-
-				tasks.push(function doExport(next) {
-					creature.exportTo(export_path, function exported(err, result) {
-						next(err, result);
-					})
-				});
-			});
-
-			console.log('Executing', tasks.length, 'export actions');
-
-			Function.series(tasks, function exportedAll(err, results) {
-
-				if (err) {
-					return alert('Export error: ' + err);
-				}
-
-			});
 		});
 	});
 });
@@ -1154,7 +1569,11 @@ ACom.setAfterMethod('ready', function loadSettingsTab(settings_element) {
 
 			default:
 				element = document.createElement('input');
-				element.value = value;
+				element.value = value !== undefined ? value : '';
+		}
+
+		if (config.disabled) {
+			element.disabled = true;
 		}
 
 		element.id = key;
@@ -2098,4 +2517,15 @@ ACom.addSetting('import_duplicate_moniker_creature', {
 	title   : 'Import creature even if they are already in the world',
 	type    : 'boolean',
 	default : false
+});
+
+ACom.addSetting('albian_babel_network_password', {
+	title   : 'Your password to log into the network',
+	type    : 'string'
+});
+
+ACom.addSetting('albian_babel_network_username', {
+	title    : 'Your username on the network',
+	type     : 'string',
+	disabled : true
 });

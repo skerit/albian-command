@@ -1,0 +1,50 @@
+:root {
+	// Grey
+	--progress-bar-bf: #1a1a1a;
+	--progress-bar-handle: #777777;
+}
+
+.progress-bar {
+	background-color: var(--progress-bar-bg);
+	height: 25px;
+	padding: 5px;
+	width: 350px;
+	margin: 50px 0;
+	border-radius: 5px;
+	box-shadow: 0 1px 5px #000 inset,
+	            0 1px 0 #444;
+
+	span {
+		display: inline-block;
+		height: 100%;
+		border-radius: 3px;
+		box-shadow: 0 1px 0 rgba(255, 255, 255, .5) inset;
+		transition: width .4s ease-in-out;
+		background-color: var(--progress-bar-handle);
+	}
+
+	&.stripes span {
+		background-size: 30px 30px;
+		background-image: linear-gradient(135deg, rgba(255, 255, 255, .15) 25%, transparent 25%,
+			transparent 50%, rgba(255, 255, 255, .15) 50%, rgba(255, 255, 255, .15) 75%,
+			transparent 75%, transparent);
+		animation: animate-stripes 3s linear infinite;
+	}
+
+	&.blue span {
+		--progress-bar-handle: #34c2e3;
+	}
+
+	&.orange span {
+		--progress-bar-handle: #fecf23;
+	}
+
+	&.green span {
+		--progress-bar-handle: #a5df41;
+	}
+}
+
+@keyframes animate-stripes {
+	0% {background-position: 0 0;} 100% {background-position: 60px 0;}
+}
+

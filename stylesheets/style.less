@@ -1,4 +1,5 @@
 @import "topsoil/less/topsoil.less";
+@import "progress-bar.less";
 
 @color-one : #262932;
 @color-two : #3c414f;
@@ -11,6 +12,7 @@
 @color-context-bg: @color-two;
 @color-letter-header-bg: @color-two;
 @color-accordion-header-bg: @color-two;
+@color-form-bg: @color-two;
 
 @color-range-bg: @color-one;
 @color-range-thumb: lighten(@color-two, 10%);
@@ -32,9 +34,56 @@ a {
 	color: inherit;
 }
 
+form {
+	background: @color-form-bg;
+}
+
+button {
+	border: none;
+	color: white;
+	background-color: @color-range-thumb;
+	padding: 1rem;
+	font-weight: bold;
+}
+
+input {
+	padding: 1rem;
+	color: black;
+}
+
+x-svg {
+	// -webkit prefix is still needed:
+	// internal Google crawlers still use old webkit versions
+	display: -webkit-inline-flex;
+	display: inline-flex;
+
+	svg {
+		width: 100%;
+		height: 100%;
+	}
+}
+
+.flex-center {
+	display: flex;
+	align-content: center;
+	align-items: center;
+}
+
 // Hide tabpages by default
 .tabpage {
 	display: none;
+}
+
+.tilerow {
+	.flexParent();
+	margin: 1rem -1rem;
+
+	>* {
+		.flexChild(1 1);
+		padding: 1rem;
+		background-color: @color-two;
+		margin: 0 1rem;
+	}
 }
 
 .sidebar {
@@ -53,10 +102,31 @@ a {
 		.flexChild(1 1);
 		.flexParent(column, flex-start);
 
-		> * {
+		> *:not(.children) {
 			.flexChild(0 0 auto);
 			padding: 1rem;
 		}
+	}
+
+	x-svg {
+		width: 1.25em;
+		color: white;
+		height: 1em;
+	}
+
+	.children {
+		display: none;
+
+		> *:not(.children) {
+			.flexChild(0 0 auto);
+			padding: 1rem 1rem 1rem 2rem;
+		}
+	}
+
+	.children.active,
+	.links a.active + .children {
+		.flexChild(0 0 auto);
+		.flexParent(column, flex-start);
 	}
 
 	#worldname {
@@ -444,3 +514,30 @@ input[type="range"] {
 		margin-bottom: 1rem;
 	}
 }
+
+.connecting-info {
+	padding: 1rem;
+	background-color: @color-two;
+}
+
+.connect-to-network {
+	flex-direction: column;
+}
+
+#login-network,
+#register-network {
+	margin: auto;
+	padding: 1rem;
+	flex-direction: column;
+	min-width: 50vw;
+
+	> * {
+		flex: 1 1;
+		align-self: stretch;
+	}
+}
+
+.st0{fill:#FFFFFF;}
+.st1{fill:#FFFFFF;stroke:#FFFFFF;stroke-width:1.5;stroke-linejoin:round;stroke-miterlimit:10;}
+.st2{fill:none;stroke:#FFFFFF;stroke-width:1.0281;stroke-miterlimit:10;}
+.st3{fill:#FFFFFF;}
