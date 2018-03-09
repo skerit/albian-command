@@ -52,6 +52,9 @@ var ACom = Function.inherits('Develry.Creatures.Base', function AlbianCommand() 
 		warp_exports  : this.resolvePath(['export', 'warp'])
 	};
 
+	// All the local export files
+	this.local_exports = {};
+
 	// Models
 	this.Setting = this.getModel('Setting');
 	this.Name = this.getModel('Name');
@@ -690,12 +693,8 @@ ACom.setMethod(function createActionElement(type, name, title, s16_name, index) 
 
 	method_name = 'do' + name.camelize() + type.camelize() + 'Action';
 
-	console.log('Looking for', method_name);
-
 	if (typeof that[method_name] != 'function') {
 		method_name = 'do' + name.camelize() + 'Action';
-
-		console.log('Now loking for', method_name)
 	}
 
 	wrapper_el.addEventListener('mousedown', function onDown(e) {
@@ -1099,6 +1098,67 @@ ACom.setAfterMethod('ready', function loadCreaturesTab(element) {
 		general_actions_table = element.querySelector('.creatures-generic-actions');
 		general_actions_table.appendChild(general_actions_row);
 	}
+});
+
+/**
+ * Load the stored creatures tab
+ *
+ * @author   Jelle De Loecker   <jelle@develry.be>
+ * @since    0.1.1
+ * @version  0.1.1
+ */
+ACom.setAfterMethod('ready', function loadStoredTab(element) {
+
+	var that = this;
+
+	fs.readdir(this.paths.local_exports, function gotFiles(err, files) {
+
+		if (err) {
+			return alert('Error reading local exports: ' + err);
+		}
+
+		let tasks = [],
+		    i;
+
+		for (i = 0; i < files.length; i++) {
+			let file = files[i];
+
+			if (!file.endsWith('.exp')) {
+				continue;
+			}
+
+			if (that.local_exports[file]) {
+				continue;
+			}
+
+			tasks.push(function loadExport(next) {
+
+				var instance = new Creatures.Export(that.capp, libpath.resolve(that.paths.local_exports, file));
+
+				instance.load(function loaded(err) {
+					if (err) {
+						console.error('Failed to load file: ' + file);
+						return next();
+					}
+
+					next(null, instance);
+				});
+			});
+		}
+
+		Function.parallel(tasks, function loaded(err, results) {
+
+			if (err) {
+				return alert('Error reading stored creatures: ' + err);
+			}
+
+			for (let i = 0; i < results.length; i++) {
+				let instance = results[i];
+
+				that._initStoredCreature(instance);
+			}
+		});
+	});
 });
 
 /**
@@ -2220,6 +2280,83 @@ ACom.setMethod(function nameCreature(creature, callback) {
 		}
 
 	});
+});
+
+/**
+ * Add the given export to the list
+ *
+ * @author   Jelle De Loecker   <jelle@develry.be>
+ * @since    0.1.1
+ * @version  0.1.1
+ */
+ACom.setMethod(function _initStoredCreature(creature, callback) {
+
+	var that = this,
+	    $list = $('.stored-list'),
+	    $row,
+	    els;
+
+	els = creature.acom_elements;
+
+	if (els) {
+		if (callback) {
+			callback();
+		}
+		return;
+	}
+
+	creature.acom_elements = els = {};
+
+	// Create the tbody element
+	els.tbody = document.createElement('tbody');
+
+	// Create the row element
+	els.row = document.createElement('tr');
+	els.$row = $row = $(els.row);
+
+	// Add the row to the tbody
+	els.tbody.appendChild(els.row);
+
+	// Add the moniker
+	els.row.dataset.moniker = creature.moniker;
+	els.tbody.dataset.moniker = creature.moniker;
+
+	this.creatures_headers.forEach(function eachName(name) {
+
+		var td = document.createElement('td');
+
+		// Add the name as a class
+		td.classList.add('field-' + name);
+
+		// Store the element under the given name
+		els[name] = td;
+
+		// And add it to the row
+		els.row.appendChild(td);
+	});
+
+	els.canvas = createCreatureCanvas(creature);
+	els.picture.appendChild(els.canvas);
+
+	// Listen to clicks on the row
+	$row.on('click', function onClick(e) {
+
+		return console.log('TODO!');
+
+		var corow = that.stored_export_options_row;
+
+		// Set the moniker
+		corow.dataset.moniker = creature.moniker;
+
+		// Insert it after the current creature's row
+		$row.after(corow);
+	});
+
+	// Add the row to the screen
+	$list.append(els.tbody);
+
+	els.name.textContent = creature.name;
+	els.moniker.textContent = creature.moniker;
 });
 
 /**

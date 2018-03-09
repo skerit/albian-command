@@ -24,8 +24,6 @@ class XSvg extends HTMLElement {
 		// Resolve the path
 		src = libpath.resolve('images', src);
 
-		console.log('Getting', src);
-
 		fs.readFile(src, 'utf8', function gotFile(err, source) {
 
 			if (err) {

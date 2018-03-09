@@ -211,10 +211,13 @@ less.render(fs.readFileSync('./stylesheets/style.less', 'utf8'), less_options, f
 });
 
 // Require the creatures class
-Creatures = require('creatures');
+var CreaturesApplication = require('creatures');
+
+// Get the Creatures namespace
+Creatures = Function.getNamespace('Develry.Creatures');
 
 // Require Albian Babel network
 AlbianBabel = require('albian-babel');
 
 // Create the Creatures application instance
-capp = new Creatures();
+capp = new CreaturesApplication();

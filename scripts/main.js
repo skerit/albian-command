@@ -28,6 +28,11 @@ function createCreatureCanvas(creature) {
 			throw err;
 		}
 
+		if (!s16) {
+			console.warn('Could not found head for creature', creature.moniker);
+			return;
+		}
+
 		s16image.image = s16.images[28];
 	});
 

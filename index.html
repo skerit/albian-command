@@ -31,6 +31,7 @@
 			<div class="sidebar">
 				<div id="worldname">Creatures&nbsp;2</div>
 				<div class="links">
+
 					<a href="#creatures">
 						<!--<s16-image s16="a00h.s16" image-index="0"></s16-image>-->
 						<i class="fas fa-users"></i>
@@ -42,14 +43,12 @@
 							Stored
 						</a>
 					</div>
+
 					<a href="#eggs">
 						<x-svg src="eggs.svg"></x-svg>
 						Eggs
 					</a>
-					<a href="#sprites">
-						<i class="fas fa-images"></i>
-						Sprites
-					</a>
+
 					<a href="#settings">
 						<i class="fas fa-wrench"></i>
 						Settings
@@ -59,7 +58,12 @@
 							<i class="fas fa-list-alt"></i>
 							Names
 						</a>
+						<a href="#sprites">
+							<i class="fas fa-images"></i>
+							Sprites
+						</a>
 					</div>
+
 					<a href="#about">
 						<i class="fas fa-wifi"></i>
 						Network
@@ -93,6 +97,26 @@
 						</thead>
 					</table>
 					<table class="creatures-generic-actions">
+					</table>
+				</div>
+
+				<div id="stored" class="tabpage">
+					<table class="stored-list make-sortable">
+						<thead class="creatures-thead">
+							<tr>
+								<th></th>
+								<th class="head-name">Name</th>
+								<th>Age</th>
+								<th>Lifestage</th>
+								<th title="Amount of Glycogen (or 'Life Force') this creature has at the moment">
+									Health
+								</th>
+								<th>Status</th>
+								<th></th>
+								<th>Drive</th>
+								<th class="head-moniker">Moniker</th>
+							</tr>
+						</thead>
 					</table>
 				</div>
 
