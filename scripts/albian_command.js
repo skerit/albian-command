@@ -212,6 +212,31 @@ ACom.prepareProperty(function all_creature_actions_row() {
  * @since    0.1.0
  * @version  0.1.0
  */
+ACom.prepareProperty(function exported_creature_options_row() {
+
+	var row = document.createElement('tr'),
+	    column = document.createElement('td'),
+	    import_creature;
+
+	// Indicate this is the actions row
+	row.classList.add('actions-row');
+
+	column.setAttribute('colspan', this.creatures_headers.length);
+	row.appendChild(column);
+
+	import_creature = this.createActionElement('exported_creature', 'import', 'Import', 'pod_.s16', 1);
+	column.appendChild(import_creature);
+
+	return row;
+});
+
+/**
+ * The specific eggs actions row
+ *
+ * @author   Jelle De Loecker   <jelle@develry.be>
+ * @since    0.1.0
+ * @version  0.1.0
+ */
 ACom.prepareProperty(function egg_options_row() {
 
 	var row = document.createElement('tr'),
@@ -734,6 +759,20 @@ ACom.setMethod(function createActionElement(type, name, title, s16_name, index) 
 						wrapper_el.egg = egg;
 						that[method_name](wrapper_el, egg);
 					});
+				} else if (type == 'exported_creature') {
+
+					let exported_creature;
+
+					for (let file in that.local_exports) {
+						let temp = that.local_exports[file];
+
+						if (temp.moniker == moniker) {
+							exported_creature = temp;
+							break;
+						}
+					}
+
+					that[method_name](wrapper_el, exported_creature);
 				}
 			} else {
 				wrapper_el.creature = null;
@@ -925,6 +964,39 @@ ACom.setMethod(function doTeleportAction(action_element, creature) {
 		$this.contextMenu({
 			x: offset.left,
 			y: offset.top
+		});
+	});
+});
+
+/**
+ * Import this exported creature
+ *
+ * @author   Jelle De Loecker   <jelle@develry.be>
+ * @since    0.1.1
+ * @version  0.1.1
+ *
+ * @param    {HTMLElement}       action_element
+ * @param    {Creatures.Export}  exported_creature
+ */
+ACom.setMethod(function doImportExportedCreatureAction(action_element, exported_creature) {
+
+	var that = this;
+
+	exported_creature.getBodyPartImage('head', function gotHead(err, s16) {
+
+		if (err) {
+			return alert('Import error: ' + err);
+		}
+
+		if (!s16) {
+			return alert('Can not import this creature: breed sprites not found');
+		}
+
+		exported_creature.import(function done(err) {
+
+			if (err) {
+				return alert('Import error: ' + err);
+			}
 		});
 	});
 });
@@ -1134,6 +1206,9 @@ ACom.setAfterMethod('ready', function loadStoredTab(element) {
 			tasks.push(function loadExport(next) {
 
 				var instance = new Creatures.Export(that.capp, libpath.resolve(that.paths.local_exports, file));
+
+				// Remember this export instance for later
+				that.local_exports[file] = instance;
 
 				instance.load(function loaded(err) {
 					if (err) {
@@ -2341,9 +2416,7 @@ ACom.setMethod(function _initStoredCreature(creature, callback) {
 	// Listen to clicks on the row
 	$row.on('click', function onClick(e) {
 
-		return console.log('TODO!');
-
-		var corow = that.stored_export_options_row;
+		var corow = that.exported_creature_options_row;
 
 		// Set the moniker
 		corow.dataset.moniker = creature.moniker;
@@ -2357,6 +2430,15 @@ ACom.setMethod(function _initStoredCreature(creature, callback) {
 
 	els.name.textContent = creature.name;
 	els.moniker.textContent = creature.moniker;
+
+	els.age.textContent = creature.formated_age;
+	els.age.dataset.sortValue = creature.age;
+
+	els.lifestage.textContent = creature.lifestage;
+	els.lifestage.dataset.sortValue = creature.agen;
+
+	els.health.textContent = ~~(creature.health / 2.56) + '%';
+	els.health.dataset.sortValue = creature.health;
 });
 
 /**
