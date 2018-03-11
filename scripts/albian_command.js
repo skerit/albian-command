@@ -152,7 +152,8 @@ ACom.prepareProperty(function creature_options_row() {
 	    column = document.createElement('td'),
 	    pick_up,
 	    teleport,
-	    language;
+	    language,
+	    inseminate;
 
 	// Indicate this is the actions row
 	row.classList.add('actions-row');
@@ -170,6 +171,9 @@ ACom.prepareProperty(function creature_options_row() {
 
 	language = this.createActionElement('creature', 'teach_language', 'Teach Language', 'acmp.s16');
 	column.appendChild(language);
+
+	inseminate = this.createActionElement('creature', 'inseminate', 'Inseminate', 'eggs.s16', 5);
+	column.appendChild(inseminate);
 
 	return row;
 });
@@ -706,7 +710,7 @@ ACom.setMethod(function createActionElement(type, name, title, s16_name, index) 
 	wrapper_el.appendChild(s16_el);
 	wrapper_el.appendChild(title_el);
 	wrapper_el.classList.add('action');
-	wrapper_el.setAttribute('data-action', title);
+	wrapper_el.setAttribute('data-action', name);
 
 	if (index == null) {
 		index = 0;
@@ -960,6 +964,80 @@ ACom.setMethod(function doTeleportAction(action_element, creature) {
 		offset = $this.offset();
 
 		action_element.teleport_menu = result;
+
+		$this.contextMenu({
+			x: offset.left,
+			y: offset.top
+		});
+	});
+});
+
+/**
+ * Inseminate the given creature
+ *
+ * @author   Jelle De Loecker   <jelle@develry.be>
+ * @since    0.1.0
+ * @version  0.1.0
+ */
+ACom.setMethod(function doInseminateAction(action_element, creature) {
+
+	var that = this,
+	    $this = $(action_element);
+
+	this.getCreatures(function gotCreatures(err, creatures) {
+
+		var offset,
+		    result,
+		    items,
+		    conf,
+		    key,
+		    i;
+
+		if (err) {
+			return alert('Error: ' + err);
+		}
+
+		result = {};
+		items = {};
+
+		// Sort the creatures by name
+		creatures.sortByPath('name');
+
+		for (i = 0; i < creatures.length; i++) {
+			let creature = creatures[i];
+
+			// Don't inseminate with other females
+			// @TODO: make this optional?
+			if (creature.female) {
+				continue;
+			}
+
+			// Don't inseminate with too young creatures
+			// @TODO: also make this optional?
+			if (creature.agen < 2) {
+				continue;
+			}
+
+			items[creature.moniker] = {
+				name     : creature.name + ' - ' + creature.formated_age + ' - ' + creature.lifestage,
+				creature : creature
+			};
+		}
+
+		result.callback = function onClick(key, options) {
+			var donor = items[key].creature;
+
+			creature.inseminate(donor, function done(err) {
+				if (err) {
+					alert('Error inseminating creature:', err);
+				}
+			});
+		};
+
+		result.items = items;
+		offset = $this.offset();
+
+		action_element.inseminate_menu = result;
 
 		$this.contextMenu({
 			x: offset.left,
@@ -2480,6 +2558,9 @@ ACom.setMethod(function _initCreature(creature, callback) {
 	els.row.dataset.moniker = creature.moniker;
 	els.tbody.dataset.moniker = creature.moniker;
 
+	// Set the gender
+	els.tbody.dataset.gender = creature.gender;
+
 	this.creatures_headers.forEach(function eachName(name) {
 
 		var td = document.createElement('td');
@@ -2557,6 +2638,9 @@ ACom.setMethod(function _initCreature(creature, callback) {
 		els.health.dataset.sortValue = creature.health;
 
 		els.drive.textContent = creature.drive;
+
+		// Set the lifestage on the tbody
+		els.tbody.dataset.lifestage = creature.lifestage;
 
 		if (creature.unconscious) {
 			status += 'Unconscious';

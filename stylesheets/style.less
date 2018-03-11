@@ -227,6 +227,16 @@ x-svg {
 	}
 }
 
+// Hide the inseminate action for male creatures
+// Or creatures that are too young to be pregnant
+[data-gender="male"],
+[data-lifestage="Baby"],
+[data-lifestage="Child"] {
+	.actions-row [data-action="inseminate"] {
+		display: none;
+	}
+}
+
 #eggs .field-moniker {
 	text-align: left !important;
 	padding-right: 0.5rem !important;

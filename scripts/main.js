@@ -7,10 +7,18 @@ var $list_body  = $('.creatures-tbody'),
 acom = new Blast.Classes.Develry.Creatures.AlbianCommand();
 
 $.contextMenu({
-	selector: '.action[data-action="Teleport"]',
+	selector: '.action[data-action="teleport"]',
 	trigger: 'none',
 	build: function buildMenu($trigger, e) {
 		return $trigger[0].teleport_menu;
+	}
+});
+
+$.contextMenu({
+	selector: '.action[data-action="inseminate"]',
+	trigger: 'none',
+	build: function buildMenu($trigger, e) {
+		return $trigger[0].inseminate_menu;
 	}
 });
 
