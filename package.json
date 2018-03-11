@@ -4,7 +4,7 @@
 	"version": "0.1.1-alpha",
 	"main": "index.html",
 	"window": {
-		"width": 960,
+		"width": 970,
 		"height": 600,
 		"toolbar": false,
 		"position": "center",

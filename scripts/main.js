@@ -22,6 +22,14 @@ $.contextMenu({
 	}
 });
 
+$.contextMenu({
+	selector: '.action[data-action="pregnancy"]',
+	trigger: 'none',
+	build: function buildMenu($trigger, e) {
+		return $trigger[0].pregnancy_menu;
+	}
+});
+
 /**
  * Create and return a canvas where the creature's head will go
  */

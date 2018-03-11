@@ -231,10 +231,16 @@ x-svg {
 // Or creatures that are too young to be pregnant
 [data-gender="male"],
 [data-lifestage="Baby"],
-[data-lifestage="Child"] {
+[data-lifestage="Child"],
+tbody[data-pregnant] {
 	.actions-row [data-action="inseminate"] {
 		display: none;
 	}
+}
+
+// Hide the pregnancy action for non-pregnant creatures
+tbody:not([data-pregnant]) .actions-row [data-action="pregnancy"] {
+	display: none;
 }
 
 #eggs .field-moniker {

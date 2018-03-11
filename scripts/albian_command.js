@@ -153,6 +153,7 @@ ACom.prepareProperty(function creature_options_row() {
 	    pick_up,
 	    teleport,
 	    language,
+	    pregnancy,
 	    inseminate;
 
 	// Indicate this is the actions row
@@ -174,6 +175,9 @@ ACom.prepareProperty(function creature_options_row() {
 
 	inseminate = this.createActionElement('creature', 'inseminate', 'Inseminate', 'eggs.s16', 5);
 	column.appendChild(inseminate);
+
+	pregnancy = this.createActionElement('creature', 'pregnancy', 'Pregnancy ...', 'eggs.s16', 7);
+	column.appendChild(pregnancy);
 
 	return row;
 });
@@ -976,8 +980,8 @@ ACom.setMethod(function doTeleportAction(action_element, creature) {
  * Inseminate the given creature
  *
  * @author   Jelle De Loecker   <jelle@develry.be>
- * @since    0.1.0
- * @version  0.1.0
+ * @since    0.1.1
+ * @version  0.1.1
  */
 ACom.setMethod(function doInseminateAction(action_element, creature) {
 
@@ -1043,6 +1047,85 @@ ACom.setMethod(function doInseminateAction(action_element, creature) {
 			x: offset.left,
 			y: offset.top
 		});
+	});
+});
+
+/**
+ * Show some pregnancy actions
+ *
+ * @author   Jelle De Loecker   <jelle@develry.be>
+ * @since    0.1.1
+ * @version  0.1.1
+ */
+ACom.setMethod(function doPregnancyAction(action_element, creature) {
+
+	var that = this,
+	    $this = $(action_element);
+
+	var offset,
+	    result,
+	    items,
+	    key,
+	    i;
+
+	result = {};
+
+	items = {
+		abort    : {name: 'Abort pregnancy'},
+		fullterm : {name: 'Make pregnancy full term'},
+		extract  : {name: 'Extract stuck egg'}
+	};
+
+	result.callback = function onClick(key, options) {
+
+		var cmd;
+
+		if (key == 'abort') {
+			cmd = 'setv baby 0';
+		} else if (key == 'fullterm') {
+			// Increase the progesterone level so the creature will lay her egg
+			cmd = 'chem 108 255';
+		} else if (key == 'extract') {
+			cmd = 'doif baby eq 0,stop,endi,'
+			    + 'doif carr ne 0,stop,endi,'
+			    + 'setv var0 baby,setv baby 0,'
+			    + 'setv var1 pos1,addv var1 posr,divv var1 2,'
+			    + 'setv var2 limb,'
+
+			    // Make the actual egg
+			    // @TODO: move this to the Egg class
+			    + 'rndv var3 0 10,'
+			    + 'mulv var3 8,'
+			    + 'new: simp eggs 8 var3 2000 0,'
+			    + 'pose 0,'
+			    + 'setv cls2 2 5 2,setv attr 195,'
+			    + 'setv obv0 var0,setv obv1 0,'
+			    + 'subv var2 hght,'
+			    + 'mvto var1 var2,slim,'
+			    + 'setv grav 1,'
+			    + 'evnt targ,sys: camt,'
+			    + 'tick 900,dde: negg'
+
+			    + ',stm# writ norn 29,endm';
+		}
+
+		if (cmd) {
+			creature.command(cmd, function done(err) {
+				if (err) {
+					return alert('Error performing "' + items[key].name + '" action: ' + err);
+				}
+			});
+		}
+	};
+
+	result.items = items;
+	offset = $this.offset();
+
+	action_element.pregnancy_menu = result;
+
+	$this.contextMenu({
+		x: offset.left,
+		y: offset.top
 	});
 });
 
@@ -2641,6 +2724,13 @@ ACom.setMethod(function _initCreature(creature, callback) {
 
 		// Set the lifestage on the tbody
 		els.tbody.dataset.lifestage = creature.lifestage;
+
+		// Is the creature pregnant?
+		if (creature.pregnant) {
+			els.tbody.dataset.pregnant = creature.pregnant;
+		} else {
+			els.tbody.removeAttribute('data-pregnant');
+		}
 
 		if (creature.unconscious) {
 			status += 'Unconscious';
