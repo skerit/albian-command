@@ -145,12 +145,6 @@ x-svg {
 		font-size: 1.5rem;
 		min-width: 92%;
 
-		s16-image {
-			margin: -1rem;
-			display: inline-block;
-			-webkit-filter: grayscale(1);
-		}
-
 		&:hover,
 		&.active {
 			background-color: @color-anchor-bg;
@@ -164,6 +158,20 @@ x-svg {
 	.speed {
 		margin-top: 10px;
 	}
+
+	s16-image {
+		line-height: 0;
+		margin: -39px -3px -7px -2px;
+		padding: 0;
+		width: 34px;
+		-webkit-filter: grayscale(1);
+		display: inline-block;
+
+		canvas {
+			display: block;
+			margin: 0;
+		}
+	}
 }
 
 .cage {
@@ -172,8 +180,16 @@ x-svg {
 }
 
 .eggs-list,
+.peers-list,
 .stored-list,
 .creatures-list {
+
+	.field-username,
+	.head-username {
+		padding: 1rem;
+		text-align: left;
+	}
+
 	.creatures-thead th:not(:empty) {
 		padding: 0 10px 10px;
 	}
@@ -341,7 +357,7 @@ table {
 	}
 
 	&.mousedown {
-		background-color: lighten(@color-main-bg, 35%);
+		background-color: lighten(@color-main-bg, 35%) !important;
 	}
 }
 

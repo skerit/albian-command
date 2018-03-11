@@ -99,6 +99,15 @@ ACom.setProperty('creatures_headers', ['picture', 'name', 'age', 'lifestage', 'h
 ACom.setProperty('eggs_headers', ['picture', 'moniker', 'gender', 'stage', 'progress', 'status']);
 
 /**
+ * The table headers of the peers list
+ *
+ * @author   Jelle De Loecker   <jelle@develry.be>
+ * @since    0.1.1
+ * @version  0.1.1
+ */
+ACom.setProperty('peers_headers', ['username', 'ip', 'received']);
+
+/**
  * The starting letters:
  * Generate array with letters A-Z
  *
@@ -271,6 +280,29 @@ ACom.prepareProperty(function egg_options_row() {
 
 	pause = this.createActionElement('egg', 'pause', 'Pause', 'eggs.s16', 1);
 	column.appendChild(pause);
+
+	return row;
+});
+
+/**
+ * The specific peer actions row
+ *
+ * @author   Jelle De Loecker   <jelle@develry.be>
+ * @since    0.1.0
+ * @version  0.1.0
+ */
+ACom.prepareProperty(function peer_options_row() {
+
+	var row = document.createElement('tr'),
+	    column = document.createElement('td');
+
+	// Indicate this is the actions row
+	row.classList.add('actions-row');
+
+	column.setAttribute('colspan', this.peers_headers.length);
+	row.appendChild(column);
+
+	column.textContent = 'test';
 
 	return row;
 });
@@ -1417,6 +1449,72 @@ ACom.setAfterMethod('ready', function loadEggsTab(element) {
 		general_actions_table = element.querySelector('.eggs-generic-actions');
 		general_actions_table.appendChild(general_actions_row);
 	}
+});
+
+/**
+ * Load the peers tab
+ *
+ * @author   Jelle De Loecker   <jelle@develry.be>
+ * @since    0.1.1
+ * @version  0.1.1
+ */
+ACom.setAfterMethod('ready', function loadPeersTab(element) {
+
+	var that = this,
+	    $table = $('.peers-list', element);
+
+	// Remove all tbodies
+	$('tbody', $table).remove();
+
+	this.babel.peers.forEach(function eachPeer(peer) {
+
+		var els = {};
+
+		// Create the tbody element
+		els.tbody = document.createElement('tbody');
+
+		// Create the row element
+		els.row = document.createElement('tr');
+		els.$row = $row = $(els.row);
+
+		// Add the row to the tbody
+		els.tbody.appendChild(els.row);
+
+		// Add the current id
+		els.row.dataset.id = peer.id;
+
+		that.peers_headers.forEach(function eachName(name) {
+
+			var td = document.createElement('td');
+
+			// Add the name as a class
+			td.classList.add('field-' + name);
+
+			// Store the element under the given name
+			els[name] = td;
+
+			// And add it to the row
+			els.row.appendChild(td);
+		});
+
+		// Listen to clicks on the row
+		$row.on('click', function onClick(e) {
+
+			var corow = that.peer_options_row;
+
+			// Set the moniker
+			corow.dataset.id = peer.id;
+
+			// Insert it after the current creature's row
+			$row.after(corow);
+		});
+
+		// Add the row to the screen
+		$table.append(els.tbody);
+
+		els.username.textContent = peer.getClaimValue('username');
+		els.ip.textContent = peer.ip;
+	});
 });
 
 /**

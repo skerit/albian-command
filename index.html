@@ -33,8 +33,7 @@
 				<div class="links">
 
 					<a href="#creatures">
-						<!--<s16-image s16="a00h.s16" image-index="0"></s16-image>-->
-						<i class="fas fa-users"></i>
+						<s16-image s16="a00h.s16" image-index="0"></s16-image>
 						Creatures
 					</a>
 					<div class="children">
@@ -68,6 +67,12 @@
 						<i class="fas fa-wifi"></i>
 						Network
 					</a>
+					<div class="children">
+						<a href="#peers">
+							<i class="fas fa-users"></i>
+							Peers
+						</a>
+					</div>
 				</div>
 				<div class="bottombuttons">
 					<div>
@@ -151,6 +156,7 @@
 					</table>
 				</div>
 				<div id="names" class="tabpage"></div>
+
 				<div id="about" class="tabpage">
 					<h1>Albian Command</h1>
 					<span class="version" js-value="package.version"></span>
@@ -187,6 +193,20 @@
 					<p style="text-align:center;margin-top:1rem">
 						Notice: If you're running Creatures in a VM you probably need to bridge your network instead of using NAT, or you might not be able to connect.
 					</p>
+				</div>
+
+				<div id="peers" class="tabpage">
+					<table class="peers-list make-sortable">
+						<thead class="peers-thead">
+							<tr>
+								<th class="head-name">Username</th>
+								<th class="head-ip">Ip</th>
+								<th>Received creatures</th>
+							</tr>
+						</thead>
+						<tbody>
+						</tbody>
+					</table>
 				</div>
 			</main>
 		</div>
