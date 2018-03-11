@@ -2555,6 +2555,14 @@ ACom.setMethod(function _initCreature(creature, callback) {
 		els.health.textContent = ~~(creature.health / 2.56) + '%';
 		els.health.dataset.sortValue = creature.health;
 
+		els.drive.textContent = creature.drive;
+
+		if (creature.unconscious) {
+			els.status.textContent = 'Unconscious';
+		} else {
+			els.status.textContent = '';
+		}
+
 		if (creature.has_name) {
 			name_doc = that.getName(creature.name);
 
