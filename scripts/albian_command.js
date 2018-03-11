@@ -87,7 +87,7 @@ ACom.setStatic(function addSetting(name, options) {
  * @since    0.1.0
  * @version  0.1.0
  */
-ACom.setProperty('creatures_headers', ['picture', 'name', 'age', 'lifestage', 'health', 'status', 'n', 'drive', 'moniker']);
+ACom.setProperty('creatures_headers', ['picture', 'name', 'age', 'lifestage', 'health', 'status', 'drive', 'moniker']);
 
 /**
  * The table headers of the eggs list
@@ -154,7 +154,8 @@ ACom.prepareProperty(function creature_options_row() {
 	    teleport,
 	    language,
 	    pregnancy,
-	    inseminate;
+	    inseminate,
+	    export_creature;
 
 	// Indicate this is the actions row
 	row.classList.add('actions-row');
@@ -167,11 +168,14 @@ ACom.prepareProperty(function creature_options_row() {
 
 	column.appendChild(pick_up);
 
-	teleport = this.createActionElement('creature', 'teleport', 'Teleport', 'tele.s16');
+	teleport = this.createActionElement('creature', 'teleport', 'Teleport ...', 'tele.s16');
 	column.appendChild(teleport);
 
 	language = this.createActionElement('creature', 'teach_language', 'Teach Language', 'acmp.s16');
 	column.appendChild(language);
+
+	export_creature = this.createActionElement('creature', 'export', 'Export', 'boin.s16', 0);
+	column.appendChild(export_creature);
 
 	inseminate = this.createActionElement('creature', 'inseminate', 'Inseminate', 'eggs.s16', 5);
 	column.appendChild(inseminate);
@@ -1709,25 +1713,10 @@ ACom.setMethod(function exportAllTo(dirpath, callback) {
 		}
 
 		creatures.forEach(function eachCreature(creature, index) {
-
-			var export_path,
-			    filename;
-
-			filename = [
-				creature.generation,
-				creature.gender,
-				creature.name.slug(),
-				creature.moniker,
-				creature.age_for_filename,
-				now
-			].join('_');
-
-			export_path = libpath.resolve(dirpath, filename);
-
 			tasks.push(function doExport(next) {
-				creature.exportTo(export_path, function exported(err, result) {
+				that.exportCreatureTo(creature, dirpath, function exported(err, result) {
 					next(err, result);
-				})
+				});
 			});
 		});
 
@@ -1743,6 +1732,39 @@ ACom.setMethod(function exportAllTo(dirpath, callback) {
 });
 
 /**
+ * Export the given creature creatures to the given directory
+ *
+ * @author   Jelle De Loecker   <jelle@develry.be>
+ * @since    0.1.1
+ * @version  0.1.1
+ *
+ * @param    {Creature}   creature
+ * @param    {String}     dirpath
+ * @param    {Function}   callback
+ */
+ACom.setMethod(function exportCreatureTo(creature, dirpath, callback) {
+
+	var that = this,
+	    export_path,
+	    filename;
+
+	filename = [
+		creature.generation,
+		creature.gender,
+		creature.name.slug(),
+		creature.moniker,
+		creature.age_for_filename,
+		Date.now()
+	].join('_');
+
+	export_path = libpath.resolve(dirpath, filename);
+
+	creature.exportTo(export_path, function exported(err, result) {
+		callback(err, result);
+	});
+});
+
+/**
  * Export all the creatures to the local directory
  *
  * @author   Jelle De Loecker   <jelle@develry.be>
@@ -1753,8 +1775,6 @@ ACom.setMethod(function doExportAllAction() {
 
 	var that = this;
 
-	console.log('Exporting all to', this.paths.local_exports);
-
 	this.createDirectory(this.paths.local_exports, function created(err) {
 
 		if (err) {
@@ -1762,6 +1782,33 @@ ACom.setMethod(function doExportAllAction() {
 		}
 
 		that.exportAllTo(that.paths.local_exports, function exported(err) {
+
+			if (err) {
+				return alert('Error exporting: ' + err);
+			}
+
+		});
+	});
+});
+
+/**
+ * Export this creatures to the local directory
+ *
+ * @author   Jelle De Loecker   <jelle@develry.be>
+ * @since    0.1.1
+ * @version  0.1.1
+ */
+ACom.setMethod(function doExportCreatureAction(element, creature) {
+
+	var that = this;
+
+	this.createDirectory(this.paths.local_exports, function created(err) {
+
+		if (err) {
+			return alert('Error creating directory: ' + err);
+		}
+
+		that.exportCreatureTo(creature, that.paths.local_exports, function exported(err) {
 
 			if (err) {
 				return alert('Error exporting: ' + err);
@@ -2742,6 +2789,14 @@ ACom.setMethod(function _initCreature(creature, callback) {
 			}
 
 			status += 'Pregnant';
+		}
+
+		if (creature.asleep) {
+			if (status) {
+				status += '<br>';
+			}
+
+			status += 'Asleep';
 		}
 
 		els.status.textContent = status;
