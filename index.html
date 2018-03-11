@@ -34,43 +34,47 @@
 
 					<a href="#creatures">
 						<s16-image s16="a00h.s16" image-index="0"></s16-image>
-						Creatures
+						<span>Creatures</span>
 					</a>
 					<div class="children">
 						<a href="#stored">
 							<i class="fas fa-download"></i>
 							Stored
 						</a>
+						<a href="#warped">
+							<i class="fas fa-cloud-download-alt"></i>
+							<span>Warped</span>
+						</a>
 					</div>
 
 					<a href="#eggs">
 						<x-svg src="eggs.svg"></x-svg>
-						Eggs
+						<span>Eggs</span>
 					</a>
 
 					<a href="#settings">
 						<i class="fas fa-wrench"></i>
-						Settings
+						<span>Settings</span>
 					</a>
 					<div class="children">
 						<a href="#names">
 							<i class="fas fa-list-alt"></i>
-							Names
+							<span>Names</span>
 						</a>
 						<a href="#sprites">
 							<i class="fas fa-images"></i>
-							Sprites
+							<span>Sprites</span>
 						</a>
 					</div>
 
 					<a href="#about">
 						<i class="fas fa-wifi"></i>
-						Network
+						<span>Network</span>
 					</a>
 					<div class="children">
 						<a href="#peers">
 							<i class="fas fa-users"></i>
-							Peers
+							<span>Peers</span>
 						</a>
 					</div>
 				</div>
@@ -116,7 +120,26 @@
 									Health
 								</th>
 								<th>Status</th>
-								<th>Drive</th>
+								<th class="head-moniker">Moniker</th>
+							</tr>
+						</thead>
+					</table>
+				</div>
+
+				<div id="warped" class="tabpage">
+					<table class="warped-list make-sortable">
+						<thead class="creatures-thead">
+							<tr>
+								<th></th>
+								<th class="head-name">Name</th>
+								<th class="head-received">Received</th>
+								<th class="head-sender">Sender</th>
+								<th>Age</th>
+								<th>Lifestage</th>
+								<th title="Amount of Glycogen (or 'Life Force') this creature has at the moment">
+									Health
+								</th>
+								<th>Status</th>
 								<th class="head-moniker">Moniker</th>
 							</tr>
 						</thead>
@@ -215,6 +238,7 @@
 		<script src="scripts/record.js"></script>
 		<script src="models/name_model.js"></script>
 		<script src="models/setting_model.js"></script>
+		<script src="models/warped_creature_model.js"></script>
 		<script src="scripts/albian_command.js"></script>
 		<script src="scripts/main.js"></script>
 	</body>

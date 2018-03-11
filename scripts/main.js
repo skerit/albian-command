@@ -30,6 +30,14 @@ $.contextMenu({
 	}
 });
 
+$.contextMenu({
+	selector: '.action[data-action="warp"]',
+	trigger: 'none',
+	build: function buildMenu($trigger, e) {
+		return $trigger[0].warp_menu;
+	}
+});
+
 /**
  * Create and return a canvas where the creature's head will go
  */

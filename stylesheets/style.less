@@ -51,6 +51,14 @@ input {
 	color: black;
 }
 
+blockquote {
+	font: 14px/22px normal helvetica, sans-serif;
+	margin-top: 10px;
+	margin-bottom: 10px;
+	padding-left: 15px;
+	border-left: 3px solid #ccc;
+}
+
 x-svg {
 	// -webkit prefix is still needed:
 	// internal Google crawlers still use old webkit versions
@@ -60,6 +68,27 @@ x-svg {
 	svg {
 		width: 100%;
 		height: 100%;
+	}
+}
+
+[data-badge]:not([data-badge=""]) {
+	position: relative;
+
+	&:after {
+		content: attr(data-badge);
+		position: absolute;
+		top:4px;
+		left:13px;
+		font-size:.7em;
+		background: #FF0000;
+		color:white;
+		width:18px;height:18px;
+		text-align:center;
+		line-height:18px;
+		border-radius:15px;
+		box-shadow:0 0 1px #333;
+		padding: 3px;
+		font-weight: bold;
 	}
 }
 
@@ -179,9 +208,18 @@ x-svg {
 	.flexParent();
 }
 
+.stored-list,
+.warped-list {
+	.field-received,
+	.field-name {
+		padding: 0 0.5rem;
+	}
+}
+
 .eggs-list,
 .peers-list,
 .stored-list,
+.warped-list,
 .creatures-list {
 
 	.field-username,
@@ -329,6 +367,11 @@ table {
 		background-color: @color-two;
 		display: inline-block;
 	}
+
+	.warped-message {
+		background-color: @color-two;
+		display: inline-block;
+	}
 }
 
 .creatures-generic-actions .actions-row td {
@@ -361,8 +404,19 @@ table {
 	}
 }
 
-.action:not(:last-child) {
+.action:not(:last-child),
+.warped-message:not(:last-child) {
 	margin-right: 1rem;
+}
+
+.warped-message {
+	vertical-align: bottom;
+	.flexParent(column);
+	padding: 1rem;
+	text-align: left;
+	height: 10rem;
+	width: 38rem;
+	margin-bottom: 1rem;
 }
 
 s16-collection {

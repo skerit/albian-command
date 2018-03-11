@@ -90,6 +90,9 @@ Model.setStatic(function getRecordClass(name) {
 		temp = Function.inherits('Develry.Creatures.Record', Function.create(record_name, function wrapper(model, data) {
 			wrapper.wrapper.super.call(this, model, data);
 		}));
+
+		temp.addField('created');
+		temp.addField('updated');
 	}
 
 	if (this.name != 'Model' && this.name == name) {

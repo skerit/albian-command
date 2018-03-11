@@ -36,6 +36,9 @@ var ACom = Function.inherits('Develry.Creatures.Base', function AlbianCommand() 
 	// Link to the speed range slider
 	this.$speed      = $('.speed');
 
+	// The #warped anchor
+	this.$warped     = $('a[href="#warped"]');
+
 	// All the settings
 	this.settings = {};
 
@@ -58,6 +61,7 @@ var ACom = Function.inherits('Develry.Creatures.Base', function AlbianCommand() 
 	// Models
 	this.Setting = this.getModel('Setting');
 	this.Name = this.getModel('Name');
+	this.WarpedCreature = this.getModel('WarpedCreature');
 
 	this.init();
 
@@ -85,9 +89,27 @@ ACom.setStatic(function addSetting(name, options) {
  *
  * @author   Jelle De Loecker   <jelle@develry.be>
  * @since    0.1.0
- * @version  0.1.0
+ * @version  0.1.1
  */
 ACom.setProperty('creatures_headers', ['picture', 'name', 'age', 'lifestage', 'health', 'status', 'drive', 'moniker']);
+
+/**
+ * The table headers of the stored creatures list
+ *
+ * @author   Jelle De Loecker   <jelle@develry.be>
+ * @since    0.1.1
+ * @version  0.1.1
+ */
+ACom.setProperty('stored_creatures_headers', ['picture', 'name', 'age', 'lifestage', 'health', 'status', 'moniker']);
+
+/**
+ * The table headers of the warped creatures list
+ *
+ * @author   Jelle De Loecker   <jelle@develry.be>
+ * @since    0.1.1
+ * @version  0.1.1
+ */
+ACom.setProperty('warped_creatures_headers', ['picture', 'name', 'received', 'sender', 'age', 'lifestage', 'health', 'status', 'moniker']);
 
 /**
  * The table headers of the eggs list
@@ -121,8 +143,8 @@ ACom.setProperty('letters', Array.range(65, 91).map(function(v) {return String.f
  * The user's password
  *
  * @author   Jelle De Loecker   <jelle@develry.be>
- * @since    0.1.0
- * @version  0.1.0
+ * @since    0.1.1
+ * @version  0.1.1
  */
 ACom.setProperty(function babel_password() {
 	return this.getSetting('albian_babel_network_password') || '';
@@ -134,8 +156,8 @@ ACom.setProperty(function babel_password() {
  * The user's username
  *
  * @author   Jelle De Loecker   <jelle@develry.be>
- * @since    0.1.0
- * @version  0.1.0
+ * @since    0.1.1
+ * @version  0.1.1
  */
 ACom.setProperty(function babel_username() {
 	return this.getSetting('albian_babel_network_username') || '';
@@ -153,7 +175,7 @@ ACom.setProperty(function babel_username() {
  *
  * @author   Jelle De Loecker   <jelle@develry.be>
  * @since    0.1.0
- * @version  0.1.0
+ * @version  0.1.1
  */
 ACom.prepareProperty(function creature_options_row() {
 
@@ -227,26 +249,61 @@ ACom.prepareProperty(function all_creature_actions_row() {
 });
 
 /**
- * The specific eggs actions row
+ * The exported creature actions row
  *
  * @author   Jelle De Loecker   <jelle@develry.be>
- * @since    0.1.0
- * @version  0.1.0
+ * @since    0.1.1
+ * @version  0.1.1
  */
 ACom.prepareProperty(function exported_creature_options_row() {
 
 	var row = document.createElement('tr'),
 	    column = document.createElement('td'),
-	    import_creature;
+	    import_creature,
+	    warp;
 
 	// Indicate this is the actions row
 	row.classList.add('actions-row');
 
-	column.setAttribute('colspan', this.creatures_headers.length);
+	column.setAttribute('colspan', this.stored_creatures_headers.length);
 	row.appendChild(column);
 
 	import_creature = this.createActionElement('exported_creature', 'import', 'Import', 'pod_.s16', 1);
 	column.appendChild(import_creature);
+
+	warp = this.createActionElement('exported_creature', 'warp', 'Warp to ...', 'tele.s16', 0);
+	column.appendChild(warp);
+
+	return row;
+});
+
+
+/**
+ * The warped creature actions row
+ *
+ * @author   Jelle De Loecker   <jelle@develry.be>
+ * @since    0.1.1
+ * @version  0.1.1
+ */
+ACom.prepareProperty(function warped_creature_options_row() {
+
+	var row = document.createElement('tr'),
+	    column = document.createElement('td'),
+	    import_creature,
+	    message;
+
+	// Indicate this is the actions row
+	row.classList.add('actions-row');
+
+	column.setAttribute('colspan', this.warped_creatures_headers.length);
+	row.appendChild(column);
+
+	import_creature = this.createActionElement('warped_creature', 'import', 'Import', 'pod_.s16', 1);
+	column.appendChild(import_creature);
+
+	message = document.createElement('div');
+	message.classList.add('warped-message');
+	column.appendChild(message);
 
 	return row;
 });
@@ -255,8 +312,8 @@ ACom.prepareProperty(function exported_creature_options_row() {
  * The specific eggs actions row
  *
  * @author   Jelle De Loecker   <jelle@develry.be>
- * @since    0.1.0
- * @version  0.1.0
+ * @since    0.1.1
+ * @version  0.1.1
  */
 ACom.prepareProperty(function egg_options_row() {
 
@@ -302,7 +359,7 @@ ACom.prepareProperty(function peer_options_row() {
 	column.setAttribute('colspan', this.peers_headers.length);
 	row.appendChild(column);
 
-	column.textContent = 'test';
+	//column.textContent = 'test';
 
 	return row;
 });
@@ -470,6 +527,88 @@ ACom.setMethod(function init() {
 
 		// The setting is on, so tell it to close it!
 		callback({type: 'close'});
+	});
+
+	// Listen for peers
+	this.babel.on('peer', function gotPeer(peer) {
+		peer.onTalk('warp_creature', function receivedWarp(data, callback) {
+
+			if (!data || !data.buffer) {
+				return callback(new Error('You sent invalid warp data'));
+			}
+
+			if (data.buffer.length > 500000) {
+				return callback(new Error('You sent too much data'));
+			}
+
+			if (data.message && typeof data.message != 'string') {
+				return callback(new Error('You sent an invalid message'));
+			}
+
+			if (data.message && data.message.length > 1024) {
+				return callback(new Error('Your message is too long'));
+			}
+
+			let warped_creature = new Creatures.Export(that.capp);
+
+			// Parse the buffer
+			warped_creature.processBuffer(data.buffer);
+
+			// Make sure te warp directory exists
+			that.createDirectory(that.paths.warp_exports, function done(err) {
+
+				if (err) {
+					// Some local error, but the other side doesn't need to know to much
+					return callback(null, {success: false});
+				}
+
+				let filename = peer.getClaimValue('username') + '-' + warped_creature.moniker + '-' + warped_creature.age_for_filename + '.exp',
+				    filepath = libpath.join(that.paths.warp_exports, filename);
+
+				fs.writeFile(filepath, data.buffer, function done(err) {
+
+					if (err) {
+						console.error('Failed to store warped creature', err);
+						return callback(null, {success: false});
+					}
+
+					let record_data = {
+						name     : warped_creature.name,
+						moniker  : warped_creature.moniker,
+						filename : filename,
+						sender   : peer.username || peer.public_key,
+						message  : data.message
+					};
+
+					let record = that.WarpedCreature.createRecord(record_data);
+
+					record.save(function saved(err) {
+
+						if (err) {
+							console.error('Failed to store warped creature record:', err);
+							return callback(null, {success: false});
+						}
+
+						// Increment the warped badge
+						let value = Number(that.$warped.attr('data-badge'));
+
+						if (!value) {
+							value = 0;
+						}
+
+						value++;
+
+						that.$warped.attr('data-badge', value);
+
+						callback(null, {success: true});
+
+						// Also init the warped creature, this will add it to the table
+						// and so will also refresh the screen if the user is on that page
+						that._initWarpedCreature(record);
+					});
+				});
+			});
+		});
 	});
 
 	setInterval(function doUpdate() {
@@ -817,6 +956,19 @@ ACom.setMethod(function createActionElement(type, name, title, s16_name, index) 
 					}
 
 					that[method_name](wrapper_el, exported_creature);
+				} else if (type == 'warped_creature') {
+					let warped_creature;
+
+					for (let i = 0; i < that.warped_creatures.length; i++) {
+						let warped = that.warped_creatures[i];
+
+						if (warped.moniker == moniker) {
+							warped_creature = warped;
+							break;
+						}
+					}
+
+					that[method_name](wrapper_el, warped_creature);
 				}
 			} else {
 				wrapper_el.creature = null;
@@ -1199,6 +1351,123 @@ ACom.setMethod(function doImportExportedCreatureAction(action_element, exported_
 });
 
 /**
+ * Import this warped in creature
+ *
+ * @author   Jelle De Loecker   <jelle@develry.be>
+ * @since    0.1.1
+ * @version  0.1.1
+ *
+ * @param    {HTMLElement}       action_element
+ * @param    {Creatures.Export}  exported_creature
+ */
+ACom.setMethod(function doImportWarpedCreatureAction(action_element, warped_creature) {
+
+	console.log('Warped:', warped_creature)
+	return this.doImportExportedCreatureAction(action_element, warped_creature.export_instance);
+});
+/**
+ * Warp this exported creature to another peer
+ *
+ * @author   Jelle De Loecker   <jelle@develry.be>
+ * @since    0.1.1
+ * @version  0.1.1
+ *
+ * @param    {HTMLElement}       action_element
+ * @param    {Creatures.Export}  exported_creature
+ */
+ACom.setMethod(function doWarpExportedCreatureAction(action_element, exported_creature) {
+
+	var that = this,
+	    $this = $(action_element),
+	    offset,
+	    result,
+	    items,
+	    key,
+	    i;
+
+	result = {};
+	items = {};
+
+	// Get the peer usernames first
+	for (i = 0; i < this.babel.peers.length; i++) {
+		let peer = this.babel.peers[i];
+
+		if (!peer.username) {
+			peer.username = peer.getClaimValue('username');
+		}
+	}
+
+	// sort the peers
+	this.babel.peers.sortByPath('username');
+
+	// Iterate again
+	for (i = 0; i < this.babel.peers.length; i++) {
+		let peer = this.babel.peers[i];
+
+		if (!peer.username) {
+			continue;
+		}
+
+		items[peer.id] = {
+			name   : 'Warp creature to ' + peer.username.encodeHTML(),
+			peer   : peer
+		};
+	}
+
+	result.callback = function onClick(key, options) {
+		var peer = items[key].peer;
+
+		if (!peer) {
+			return;
+		}
+
+		let msg = prompt('Please provide a message for the receiver');
+
+		if (msg == null) {
+			return;
+		}
+
+		let bomb = Function.timebomb(5000, function done(err) {
+			alert('Warp timed out!');
+		});
+
+		peer.talk('warp_creature', {
+			message : msg,
+			buffer  : exported_creature.buffer
+		}, function done(err, response) {
+
+			if (bomb.exploded) {
+				return;
+			}
+
+			bomb.defuse();
+
+			if (err) {
+				return alert('Error warping: ' + err);
+			}
+
+			console.log('Warp response:', response);
+		});
+	};
+
+	if (Object.isEmpty(items)) {
+		result.__empty = {
+			name : 'There are no peers currently online!'
+		};
+	}
+
+	result.items = items;
+	offset = $this.offset();
+
+	action_element.warp_menu = result;
+
+	$this.contextMenu({
+		x: offset.left,
+		y: offset.top
+	});
+});
+
+/**
  * Hatch this egg
  *
  * @author   Jelle De Loecker   <jelle@develry.be>
@@ -1383,6 +1652,12 @@ ACom.setAfterMethod('ready', function loadStoredTab(element) {
 	fs.readdir(this.paths.local_exports, function gotFiles(err, files) {
 
 		if (err) {
+
+			// Folder doesn't exist yet
+			if (err.code == 'ENOENT') {
+				return;
+			}
+
 			return alert('Error reading local exports: ' + err);
 		}
 
@@ -1433,6 +1708,76 @@ ACom.setAfterMethod('ready', function loadStoredTab(element) {
 	});
 });
 
+
+/**
+ * Load the warped creatures tab
+ *
+ * @author   Jelle De Loecker   <jelle@develry.be>
+ * @since    0.1.1
+ * @version  0.1.1
+ */
+ACom.setAfterMethod('ready', function loadWarpedTab(element) {
+
+	var that = this;
+
+	// Reset the badge
+	this.$warped.attr('data-badge', null);
+
+	this.getWarpedCreatures(function gotWarpedCreatures(err, result) {
+
+		if (err) {
+			console.error('Error getting warped creatures records:', err);
+			return;
+		}
+
+		result.forEach(function eachWarpedCreature(warped_creature) {
+			that._initWarpedCreature(warped_creature);
+		});
+	});
+});
+
+/**
+ * Load warped creatures record
+ *
+ * @author   Jelle De Loecker   <jelle@develry.be>
+ * @since    0.1.1
+ * @version  0.1.1
+ */
+ACom.setAfterMethod('ready', function getWarpedCreatures(callback) {
+
+	var that = this;
+
+	if (!this.warped_creatures) {
+		this.warped_creatures = [];
+	}
+
+	this.WarpedCreature.find(function gotAll(err, records) {
+
+		var tasks = [];
+
+		if (err) {
+			return callback(err);
+		}
+
+		records.forEach(function eachRecord(record) {
+
+			if (that.warped_creatures.findByPath('_id', record._id)) {
+				return;
+			}
+
+			that.warped_creatures.push(record);
+
+			tasks.push(function loadCreature(next) {
+				record.load(next);
+			});
+		});
+
+		Function.series(tasks, function done(err) {
+			callback(err, that.warped_creatures);
+		});
+	});
+});
+
 /**
  * Load the eggs tab
  *
@@ -1468,7 +1813,8 @@ ACom.setAfterMethod('ready', function loadPeersTab(element) {
 
 	this.babel.peers.forEach(function eachPeer(peer) {
 
-		var els = {};
+		var els = {},
+		    $row;
 
 		// Create the tbody element
 		els.tbody = document.createElement('tbody');
@@ -2702,7 +3048,7 @@ ACom.setMethod(function _initStoredCreature(creature, callback) {
 	els.row.dataset.moniker = creature.moniker;
 	els.tbody.dataset.moniker = creature.moniker;
 
-	this.creatures_headers.forEach(function eachName(name) {
+	this.stored_creatures_headers.forEach(function eachName(name) {
 
 		var td = document.createElement('td');
 
@@ -2745,6 +3091,118 @@ ACom.setMethod(function _initStoredCreature(creature, callback) {
 
 	els.health.textContent = ~~(creature.health / 2.56) + '%';
 	els.health.dataset.sortValue = creature.health;
+});
+
+/**
+ * Add the given warped creature to the list
+ *
+ * @author   Jelle De Loecker   <jelle@develry.be>
+ * @since    0.1.1
+ * @version  0.1.1
+ *
+ * @param    {Document}   warped_record
+ */
+ACom.setMethod(function _initWarpedCreature(warped_record, callback) {
+
+	var that = this,
+	    $list = $('.warped-list'),
+	    $row,
+	    els;
+
+	els = warped_record.acom_elements;
+
+	if (els) {
+		if (callback) {
+			callback();
+		}
+		return;
+	}
+
+	warped_record.acom_elements = els = {};
+
+	// Create the tbody element
+	els.tbody = document.createElement('tbody');
+
+	// Create the row element
+	els.row = document.createElement('tr');
+	els.$row = $row = $(els.row);
+
+	// Add the row to the tbody
+	els.tbody.appendChild(els.row);
+
+	warped_record.load(function loaded(err) {
+
+		if (err) {
+			console.error('Error loading warped creature:', err);
+			return;
+		}
+
+		let creature = warped_record.export_instance;
+
+		// Add the moniker
+		els.row.dataset.moniker = creature.moniker;
+		els.tbody.dataset.moniker = creature.moniker;
+
+		that.warped_creatures_headers.forEach(function eachName(name) {
+
+			var td = document.createElement('td');
+
+			// Add the name as a class
+			td.classList.add('field-' + name);
+
+			// Store the element under the given name
+			els[name] = td;
+
+			// And add it to the row
+			els.row.appendChild(td);
+		});
+
+		els.canvas = createCreatureCanvas(creature);
+		els.picture.appendChild(els.canvas);
+
+		// Listen to clicks on the row
+		$row.on('click', function onClick(e) {
+
+			var corow = that.warped_creature_options_row,
+			    $message = $('.warped-message', corow),
+			    html;
+
+			// Set the moniker
+			corow.dataset.moniker = creature.moniker;
+
+			html = String(warped_record.message || '').encodeHTML();
+
+			if (html) {
+				html = 'Message from ' + warped_record.getSenderName() + ':<br><blockquote>' + html + '</blockquote>';
+			}
+
+			// Set the message
+			$message.html(html);
+
+			// Insert it after the current creature's row
+			$row.after(corow);
+		});
+
+		// Add the row to the screen
+		$list.append(els.tbody);
+
+		els.name.textContent = creature.name;
+		els.moniker.textContent = creature.moniker;
+
+		els.received.textContent = warped_record.created.format('Y-m-d H:i');
+		els.received.dataset.sortValue = 0 + warped_record.created;
+
+		els.sender.textContent = warped_record.getSenderName();
+
+		els.age.textContent = creature.formated_age;
+		els.age.dataset.sortValue = creature.age;
+
+		els.lifestage.textContent = creature.lifestage;
+		els.lifestage.dataset.sortValue = creature.agen;
+
+		els.health.textContent = ~~(creature.health / 2.56) + '%';
+		els.health.dataset.sortValue = creature.health;
+	});
 });
 
 /**
