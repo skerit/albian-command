@@ -2531,7 +2531,8 @@ ACom.setMethod(function _initCreature(creature, callback) {
 	// The update function
 	function updateCreature(callback) {
 
-		var name_doc;
+		var name_doc,
+		    status = '';
 
 		if (updating) {
 			return;
@@ -2558,10 +2559,18 @@ ACom.setMethod(function _initCreature(creature, callback) {
 		els.drive.textContent = creature.drive;
 
 		if (creature.unconscious) {
-			els.status.textContent = 'Unconscious';
-		} else {
-			els.status.textContent = '';
+			status += 'Unconscious';
 		}
+
+		if (creature.pregnant) {
+			if (status) {
+				status += '<br>';
+			}
+
+			status += 'Pregnant';
+		}
+
+		els.status.textContent = status;
 
 		if (creature.has_name) {
 			name_doc = that.getName(creature.name);
