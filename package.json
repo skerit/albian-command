@@ -12,9 +12,10 @@
 	},
 	"license": "GPL-3.0",
 	"dependencies": {
-		"creatures": "~0.2.0",
-		"less": "3.0.0",
-		"nedb": "~1.8.0"
+		"albian-babel" : "~0.1.0",
+		"creatures"    : "~0.2.0",
+		"less"         : "3.0.0",
+		"nedb"         : "~1.8.0"
 	},
 	"devDependencies": {
 		"nwjs-builder-phoenix": "^1.14.6"
