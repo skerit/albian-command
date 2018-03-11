@@ -16,6 +16,9 @@ v8.log
 callgrind*
 *.wtf-trace
 
+# Ignore lock file
+package-lock.json
+
 # Ignore node modules
 /node_modules/
 files/

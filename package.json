@@ -1,7 +1,7 @@
 {
 	"name": "albian-command",
 	"description": "Get complete control over your C2 norns",
-	"version": "0.1.1-alpha",
+	"version": "0.1.1",
 	"main": "index.html",
 	"window": {
 		"width": 995,
@@ -14,8 +14,7 @@
 	"dependencies": {
 		"creatures": "~0.2.0",
 		"less": "3.0.0",
-		"nedb": "~1.8.0",
-		"msgpack": "~1.0.0"
+		"nedb": "~1.8.0"
 	},
 	"devDependencies": {
 		"nwjs-builder-phoenix": "^1.14.6"
@@ -33,6 +32,5 @@
 	"scripts": {
 		"dist": "build --tasks win-x86 --mirror https://dl.nwjs.io/ .",
 		"start": "run --x86 --mirror https://dl.nwjs.io/ ."
-	},
-	"private": true
+	}
 }
