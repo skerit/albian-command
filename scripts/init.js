@@ -42,7 +42,13 @@ fs.gracefulify(realfs);
 console.log('Requiring Background Protoblast...');
 
 // Enable global protoblast in the node.js context
-temp = require('creatures/node_modules/protoblast')(true);
+try {
+	temp = require('protoblast');
+} catch (err) {
+	temp = require('creatures/node_modules/protoblast');
+}
+
+temp = temp(true);
 
 console.log('Background Protoblast has loaded');
 
