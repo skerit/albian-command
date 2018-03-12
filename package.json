@@ -1,7 +1,7 @@
 {
 	"name"          : "albian-command",
 	"description"   : "Get complete control over your C2 norns",
-	"version"       : "0.1.1",
+	"version"       : "0.1.2-alpha",
 	"main"          : "index.html",
 	"window": {
 		"width"     : 995,

@@ -1370,12 +1370,13 @@ ACom.setMethod(function doImportWarpedCreatureAction(action_element, warped_crea
 	console.log('Warped:', warped_creature)
 	return this.doImportExportedCreatureAction(action_element, warped_creature.export_instance);
 });
+
 /**
  * Warp this exported creature to another peer
  *
  * @author   Jelle De Loecker   <jelle@develry.be>
  * @since    0.1.1
- * @version  0.1.1
+ * @version  0.1.2
  *
  * @param    {HTMLElement}       action_element
  * @param    {Creatures.Export}  exported_creature
@@ -1420,7 +1421,12 @@ ACom.setMethod(function doWarpExportedCreatureAction(action_element, exported_cr
 	}
 
 	result.callback = function onClick(key, options) {
-		var peer = items[key].peer;
+		var item = items[key],
+		    peer;
+
+		if (item) {
+			peer = item.peer;
+		}
 
 		if (!peer) {
 			return;
@@ -1456,7 +1462,7 @@ ACom.setMethod(function doWarpExportedCreatureAction(action_element, exported_cr
 	};
 
 	if (Object.isEmpty(items)) {
-		result.__empty = {
+		items.__empty = {
 			name : 'There are no peers currently online!'
 		};
 	}

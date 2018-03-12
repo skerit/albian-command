@@ -1,3 +1,9 @@
+## 0.1.2 (WIP)
+
+* When opening a new world the current world name will be updated
+* Creatures that are no longer in the world will now be removed from the list correctly
+* If no peers are on-line you won't get an error when trying to warp a creature
+
 ## 0.1.1 (2018-03-12)
 
 * Add "Export all" and "Import all" general creatures actions
