@@ -1,14 +1,14 @@
 {
-	"name": "albian-command",
-	"description": "Get complete control over your C2 norns",
-	"version": "0.1.1",
-	"main": "index.html",
+	"name"          : "albian-command",
+	"description"   : "Get complete control over your C2 norns",
+	"version"       : "0.1.1",
+	"main"          : "index.html",
 	"window": {
-		"width": 995,
-		"height": 600,
-		"toolbar": false,
-		"position": "center",
-		"resizable": true
+		"width"     : 995,
+		"height"    : 600,
+		"toolbar"   : false,
+		"position"  : "center",
+		"resizable" : true
 	},
 	"license": "GPL-3.0",
 	"dependencies": {
