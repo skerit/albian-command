@@ -427,7 +427,7 @@ ACom.setProperty(function speed() {
  *
  * @author   Jelle De Loecker   <jelle@develry.be>
  * @since    0.1.0
- * @version  0.1.1
+ * @version  0.1.2
  */
 ACom.setMethod(function init() {
 
@@ -437,6 +437,11 @@ ACom.setMethod(function init() {
 
 	// Load the world name
 	this.getWorldName();
+
+	// Listen for world name changes
+	this.capp.on('world_name', function gotNewName(name) {
+		that.world_name = name;
+	});
 
 	// Load in the creatures
 	this.getCreatures();
