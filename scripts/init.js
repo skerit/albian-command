@@ -213,6 +213,10 @@ less_options = {
 
 // Yeah, it renders on every load. Sue me
 less.render(fs.readFileSync('./stylesheets/style.less', 'utf8'), less_options, function gotResult(err, result) {
+	if (err) {
+		throw err;
+	}
+
 	document.getElementById('mainstyle').innerHTML = result.css;
 });
 
