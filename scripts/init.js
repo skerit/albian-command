@@ -191,6 +191,32 @@ function debug(message) {
 	alert(result);
 }
 
+/**
+ * Show an error message
+ */
+function alertError(err, prefix) {
+
+	var result;
+
+	if (!prefix) {
+		prefix = 'Error:';
+	}
+
+	result = prefix + '\n' + Blast.Bound.String.multiply('-', 5+prefix.length);
+	result += '\n\n';
+
+	if (err.type == 'window' && err.req) {
+		result += 'Was waiting for a window with title';
+		result += '\n\n"' + err.req.command + '"\n\n';
+		result += 'but it didn\'t appear.';
+	} else {
+		result += err;
+	}
+
+	console.error('Show error:', err, result);
+	alert(result);
+}
+
 if (is_dev_mode) {
 	// This can be called on any version,
 	// but the tools will be empty in the regular version

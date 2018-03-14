@@ -2233,13 +2233,13 @@ ACom.setMethod(function doExportAllAction() {
 	this.createDirectory(this.paths.local_exports, function created(err) {
 
 		if (err) {
-			return alert('Error creating directory: ' + err);
+			return alertError(err, 'Error creating directory');
 		}
 
 		that.exportAllTo(that.paths.local_exports, function exported(err) {
 
 			if (err) {
-				return alert('Error exporting: ' + err);
+				return alertError(err, 'Error exporting');
 			}
 
 		});
@@ -2260,13 +2260,13 @@ ACom.setMethod(function doExportCreatureAction(element, creature) {
 	this.createDirectory(this.paths.local_exports, function created(err) {
 
 		if (err) {
-			return alert('Error creating directory: ' + err);
+			return alertError(err, 'Error creating directory');
 		}
 
 		that.exportCreatureTo(creature, that.paths.local_exports, function exported(err) {
 
 			if (err) {
-				return alert('Error exporting: ' + err);
+				return alertError(err, 'Error exporting');
 			}
 
 		});
@@ -2290,7 +2290,7 @@ ACom.setMethod(function doExportAllToAction() {
 	chooseDirectory(function done(err, dirpath) {
 
 		if (err) {
-			return alert('Error: ' + err);
+			return alertError(err, 'Error choosing directory');
 		}
 
 		if (!dirpath) {
@@ -2300,7 +2300,7 @@ ACom.setMethod(function doExportAllToAction() {
 		that.exportAllTo(dirpath, function done(err) {
 
 			if (err) {
-				return alert('Error exporting: ' + err);
+				return alertError(err, 'Error exporting');
 			}
 
 		});

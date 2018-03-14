@@ -3,6 +3,8 @@
 * When opening a new world the current world name will be updated
 * Creatures that are no longer in the world will now be removed from the list correctly
 * If no peers are on-line you won't get an error when trying to warp a creature
+* Many fixes (See `creatures` library v0.2.2)
+* Show better errors when exporting/importing
 
 ## 0.1.1 (2018-03-12)
 
