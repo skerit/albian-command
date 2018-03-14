@@ -5,6 +5,8 @@
 * If no peers are on-line you won't get an error when trying to warp a creature
 * Many fixes (See `creatures` library v0.2.2)
 * Show better errors when exporting/importing
+* Add setting to connect over a preferred port
+* Fix not being able to register a username once connected
 
 ## 0.1.1 (2018-03-12)
 

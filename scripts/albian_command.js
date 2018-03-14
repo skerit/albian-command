@@ -153,6 +153,19 @@ ACom.setProperty(function babel_password() {
 });
 
 /**
+ * The user's preferred port
+ *
+ * @author   Jelle De Loecker   <jelle@develry.be>
+ * @since    0.1.2
+ * @version  0.1.2
+ */
+ACom.setProperty(function babel_preferred_port() {
+	return this.getSetting('albian_babel_network_preferred_port') || null;
+}, function setPreferredPort(port) {
+	return this.setSetting('albian_babel_network_preferred_port', port);
+});
+
+/**
  * The user's username
  *
  * @author   Jelle De Loecker   <jelle@develry.be>
@@ -502,6 +515,12 @@ ACom.setMethod(function init() {
 
 		var transaction;
 
+		// If we don't have a preferred port yet,
+		// remember this one for the future
+		if (!that.babel_preferred_port) {
+			that.babel_preferred_port = that.babel.port;
+		}
+
 		// If we logged in during a claim, the username will be set anyway
 		if (claimed) {
 			return;
@@ -654,6 +673,11 @@ ACom.setCacheMethod(function doAsyncInit() {
 			next();
 		});
 	}, function loginToNetwork(next) {
+
+		if (that.babel_preferred_port) {
+			that.babel.preferred_port = that.babel_preferred_port;
+		}
+
 		if (!that.babel_password) {
 			return next();
 		}
@@ -2028,11 +2052,16 @@ ACom.setAfterMethod('ready', function loadAboutTab(element) {
 
 	this.after('loggedin', function onLoggedin() {
 
-		$connecting.show();
-		$connecting.text('Logged in as "' + (that.babel_username || that.babel.public_key) + '"');
+		if (!that.babel_username) {
+			$connecting.show();
+			$connecting.text('Connected to the network...');
+		} else {
+			$connecting.show();
+			$connecting.text('Logged in as "' + (that.babel_username || that.babel.public_key) + '"');
 
-		// Hide all the forms
-		$('form', connect_element).hide();
+			// Hide all the forms
+			$('form', connect_element).hide();
+		}
 	});
 });
 
@@ -3560,4 +3589,9 @@ ACom.addSetting('albian_babel_network_username', {
 	title    : 'Your username on the network',
 	type     : 'string',
 	disabled : true
+});
+
+ACom.addSetting('albian_babel_network_preferred_port', {
+	title    : 'The preferred port to connect to the network on',
+	type     : 'number'
 });

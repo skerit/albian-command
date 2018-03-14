@@ -199,15 +199,38 @@
 					</p>
 					<div class="tilerow">
 						<div class="tile">
+							You have
 							<span class="blocks" js-value="babel.block_count"></span>
-							out of
-							<span class="blocks" js-value="babel.network_block_count" js-value-default="?"></span>
+							blocks out of
+							<span class="blocks" js-value="babel.network_block_count" js-value-default="an unknown amount of"></span>
 							blocks
 						</div>
 
 						<div class="tile">
 							<span class="blocks" js-value="babel.number_of_connections"></span>
-							connections
+							connected peers
+						</div>
+
+						<div class="tile">
+							<span class="blocks" js-value="babel.number_of_connection_attempts"></span>
+							connecting peers
+						</div>
+					</div>
+
+					<div class="tilerow">
+						<div class="tile">
+							Your ip:
+							<span class="blocks" js-value="babel.ip"></span>
+						</div>
+
+						<div class="tile">
+							Listening on port:
+							<span class="blocks" js-value="babel.port"></span>
+						</div>
+
+						<div class="tile">
+							Discovering peers through:
+							<span class="blocks" js-value="babel.discovery_port"></span>
 						</div>
 					</div>
 
