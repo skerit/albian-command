@@ -446,6 +446,8 @@ table {
 }
 
 s16-collection {
+	animation: fixfit 0.1s normal;
+
 	.flexParent(column);
 	padding: 0.5rem;
 
@@ -472,6 +474,8 @@ s16-collection {
 }
 
 s16-image {
+	animation: fixfit 0.1s normal;
+
 	canvas {
 		max-width: 100%;
 		max-height: 100%;
@@ -670,3 +674,20 @@ input[type="range"] {
 .st1{fill:#FFFFFF;stroke:#FFFFFF;stroke-width:1.5;stroke-linejoin:round;stroke-miterlimit:10;}
 .st2{fill:none;stroke:#FFFFFF;stroke-width:1.0281;stroke-miterlimit:10;}
 .st3{fill:#FFFFFF;}
+
+// This is a silly animation that will force a redraw of the element
+// which is what we need to fix the object-fit property
+@keyframes fixfit {
+	from {
+		outline: 0px solid;
+		outline-color: transparent;
+	}
+	50% {
+		outline: 1px solid;
+		outline-color: transparent;
+	}
+	to {
+		outline: 0px solid;
+		outline-color: transparent;
+	}
+}

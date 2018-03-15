@@ -3014,8 +3014,6 @@ ACom.setAfterMethod('ready', function getCreatures(callback) {
 
 		creatures.forEach(function eachCreature(creature) {
 
-			console.log('Creature name is', creature.name);
-
 			tasks.push(function doCreature(next) {
 
 				// Re-set the creature's name
@@ -3242,6 +3240,7 @@ ACom.setMethod(function _initStoredCreature(creature, callback) {
 
 		// If this is a click on the same creature, close the actions row
 		if (corow.dataset.moniker == creature.moniker) {
+			corow.dataset.moniker = '';
 			return corow.remove();
 		}
 
@@ -3344,6 +3343,7 @@ ACom.setMethod(function _initWarpedCreature(warped_record, callback) {
 
 			// If this is a click on the same creature, close the actions row
 			if (corow.dataset.moniker == creature.moniker) {
+				corow.dataset.moniker = '';
 				return corow.remove();
 			}
 
@@ -3451,6 +3451,7 @@ ACom.setMethod(function _initCreature(creature, callback) {
 
 		// If this is a click on the same creature, close the actions row
 		if (corow.dataset.moniker == creature.moniker) {
+			corow.dataset.moniker = '';
 			return corow.remove();
 		}
 
@@ -3646,6 +3647,7 @@ ACom.setMethod(function _initEgg(egg, callback) {
 
 		// If this is a click on the same egg, close the actions row
 		if (corow.dataset.moniker == egg.moniker) {
+			corow.dataset.moniker = '';
 			return corow.remove();
 		}
 
