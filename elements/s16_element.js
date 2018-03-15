@@ -100,9 +100,15 @@ class S16Image extends HTMLElement {
 	 *
 	 * @author   Jelle De Loecker   <jelle@develry.be>
 	 * @since    0.1.0
-	 * @version  0.1.0
+	 * @version  0.1.2
 	 */
 	set image(value) {
+
+		if (!value) {
+			console.warn('Tried to set invalid S16 data', this);
+			return;
+		}
+
 		this._s16_image = value;
 
 		this.canvas.width = value.width;

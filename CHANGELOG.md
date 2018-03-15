@@ -9,6 +9,7 @@
 * Fix not being able to register a username once connected
 * Fix error where the program would block when a creature's name starts with a non alphabetical character
 * Add (very basic) CAOS tool
+* Add ability to toggle the powerups to the settings page
 
 ## 0.1.1 (2018-03-12)
 

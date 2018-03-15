@@ -399,6 +399,29 @@ ACom.prepareProperty(function all_eggs_actions_row() {
 });
 
 /**
+ * The extra settings actions row
+ *
+ * @author   Jelle De Loecker   <jelle@develry.be>
+ * @since    0.1.2
+ * @version  0.1.2
+ */
+ACom.prepareProperty(function all_settings_actions_row() {
+
+	var row = document.createElement('tr'),
+	    column = document.createElement('td'),
+	    states;
+
+	// Indicate this is the actions row
+	row.classList.add('actions-row');
+	row.appendChild(column);
+
+	states = this.createActionElement('setting', 'toggle_powerups', 'Toggle Powerups', 'powp.s16', 0);
+	column.appendChild(states);
+
+	return row;
+});
+
+/**
  * The name of the current world
  *
  * @author   Jelle De Loecker   <jelle@develry.be>
@@ -1561,6 +1584,24 @@ ACom.setMethod(function doResumeEggAction(action_element, egg) {
 });
 
 /**
+ * Toggle the game states
+ *
+ * @author   Jelle De Loecker   <jelle@develry.be>
+ * @since    0.1.2
+ * @version  0.1.2
+ */
+ACom.setMethod(function doTogglePowerupsSettingAction(action_element) {
+
+	this.capp.command('sys: cmnd 32774', function done(err) {
+
+		if (err) {
+			alertError(err);
+		}
+
+	});
+});
+
+/**
  * Get favourite locations in the current world
  *
  * @author   Jelle De Loecker   <jelle@develry.be>
@@ -2350,6 +2391,7 @@ ACom.setMethod(function doExportAllToAction() {
 ACom.setAfterMethod('ready', function loadSettingsTab(settings_element) {
 
 	var that = this,
+	    actions_table,
 	    config,
 	    tbody,
 	    key;
@@ -2425,6 +2467,9 @@ ACom.setAfterMethod('ready', function loadSettingsTab(settings_element) {
 			that.setSetting(key, value);
 		});
 	});
+
+	actions_table = settings_element.querySelector('.settings-generic-actions');
+	actions_table.appendChild(this.all_settings_actions_row);
 });
 
 /**
