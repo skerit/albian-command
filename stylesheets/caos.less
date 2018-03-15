@@ -8,7 +8,7 @@
 
 	> * {
 		.flexChild(1 1);
-		.flexParent(column);
+		.flexParent(column, space-between, nowrap);
 	}
 }
 
@@ -23,12 +23,14 @@
 	background-color: @caos-input-bg;
 	.flexChild(1 1);
 	padding: 1rem;
+	overflow: auto;
 }
 
 #caos-output {
 	background-color: @caos-output-bg;
 	.flexChild(1 1);
 	padding: 1rem;
+	overflow: auto;
 
 	&.error {
 		background-color: @caos-output-error;
@@ -42,6 +44,6 @@
 
 .execute-caos {
 	position: absolute;
-	right: 1rem;
+	right: 2rem;
 	bottom: 1rem;
 }

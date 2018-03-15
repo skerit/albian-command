@@ -198,6 +198,7 @@ ACom.prepareProperty(function creature_options_row() {
 	var row = document.createElement('tr'),
 	    column = document.createElement('td'),
 	    select,
+	    infect,
 	    pick_up,
 	    teleport,
 	    language,
@@ -233,6 +234,9 @@ ACom.prepareProperty(function creature_options_row() {
 
 	select = this.createActionElement('creature', 'select', 'Select', 'halo.s16', 0);
 	column.appendChild(select);
+
+	infect = this.createActionElement('creature', 'infect', 'Infect with random bacteria', 'nats.s16', 0);
+	column.appendChild(infect);
 
 	return row;
 });
@@ -1389,6 +1393,27 @@ ACom.setMethod(function doSelectCreatureAction(action_element, creature) {
 });
 
 /**
+ * Infect this creature
+ *
+ * @author   Jelle De Loecker   <jelle@develry.be>
+ * @since    0.1.2
+ * @version  0.1.2
+ */
+ACom.setMethod(function doInfectCreatureAction(action_element, creature) {
+
+	var that = this;
+
+	that.capp.doUnpaused(function doInfect(next) {
+		that.capp.command('inst,setv norn ' + creature.id + ',sys: cmnd 32807,endm', function done(err) {
+			next();
+			if (err) {
+				alertError(err);
+			}
+		});
+	});
+});
+
+/**
  * Import this exported creature
  *
  * @author   Jelle De Loecker   <jelle@develry.be>
@@ -2513,10 +2538,19 @@ ACom.setAfterMethod('ready', function loadCaosTab(element) {
 	// Execute caos on click
 	exec.addEventListener('click', function onClick(e) {
 
-		var code = input.innerText;
+		var code = input.innerText.trim();
+
+		// Collapse all tabs
+		code = code.replace(/\t/g, '');
+
+		// Replace all duplicate newlines with a single one
+		code = code.replace(/\n+/g, '\n');
 
 		// Replace all newlines with commas
-		code = code.trim().replace(/\n/g, ',');
+		code = code.replace(/\n/g, ',');
+
+		// Replace all duplicate commas with a single comma
+		code = code.replace(/,+/g, ',');
 
 		that.capp.ole.sendCAOS(code, function gotResult(err, result) {
 

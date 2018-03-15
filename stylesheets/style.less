@@ -390,7 +390,7 @@ table {
 
 	.action {
 		background-color: @color-two;
-		display: inline-block;
+		display: inline-flex;
 	}
 
 	.warped-message {
@@ -410,19 +410,19 @@ table {
 	cursor: pointer;
 	text-align: center;
 	height: 10rem;
-	width: 11rem;
+	width: 10rem;
 	margin-bottom: 1rem;
+	overflow: hidden;
 
 	s16-image {
 		.flexChild(1 1);
 		.flexParent(row, center);
 		align-self: center;
-		height: 6rem;
+		height: 5rem;
 	}
 
 	span {
-		display: inline-block;
-		margin-top: 1rem;
+		.flexChild(0 1);
 	}
 
 	&.mousedown {
