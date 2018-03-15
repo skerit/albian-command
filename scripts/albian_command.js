@@ -710,7 +710,9 @@ ACom.setCacheMethod(function doAsyncInit() {
 	}, function loginToNetwork(next) {
 
 		if (that.babel_preferred_port) {
-			that.babel.preferred_port = that.babel_preferred_port;
+			// Apparently discovery-swarm does not like being told which
+			// port to use, so disable this for now
+			//that.babel.preferred_port = that.babel_preferred_port;
 		}
 
 		if (!that.babel_password) {
@@ -3802,7 +3804,10 @@ ACom.addSetting('albian_babel_network_username', {
 	disabled : true
 });
 
+// We hide this for now because apparently discovery-swarm
+// doesn't like being told what port to use
 ACom.addSetting('albian_babel_network_preferred_port', {
 	title    : 'The preferred port to connect to the network on',
-	type     : 'number'
+	type     : 'number',
+	hidden   : true
 });
