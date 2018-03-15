@@ -10,6 +10,8 @@
 * Fix error where the program would block when a creature's name starts with a non alphabetical character
 * Add (very basic) CAOS tool
 * Add ability to toggle the powerups to the settings page
+* Clicking on the same creature/egg row will hide the actions row
+* Added Creature select action
 
 ## 0.1.1 (2018-03-12)
 

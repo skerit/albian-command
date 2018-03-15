@@ -191,12 +191,13 @@ ACom.setProperty(function babel_username() {
  *
  * @author   Jelle De Loecker   <jelle@develry.be>
  * @since    0.1.0
- * @version  0.1.1
+ * @version  0.1.2
  */
 ACom.prepareProperty(function creature_options_row() {
 
 	var row = document.createElement('tr'),
 	    column = document.createElement('td'),
+	    select,
 	    pick_up,
 	    teleport,
 	    language,
@@ -229,6 +230,9 @@ ACom.prepareProperty(function creature_options_row() {
 
 	pregnancy = this.createActionElement('creature', 'pregnancy', 'Pregnancy ...', 'eggs.s16', 7);
 	column.appendChild(pregnancy);
+
+	select = this.createActionElement('creature', 'select', 'Select', 'halo.s16', 0);
+	column.appendChild(select);
 
 	return row;
 });
@@ -1374,6 +1378,17 @@ ACom.setMethod(function doPregnancyAction(action_element, creature) {
 });
 
 /**
+ * Select this creature
+ *
+ * @author   Jelle De Loecker   <jelle@develry.be>
+ * @since    0.1.2
+ * @version  0.1.2
+ */
+ACom.setMethod(function doSelectCreatureAction(action_element, creature) {
+	creature.select();
+});
+
+/**
  * Import this exported creature
  *
  * @author   Jelle De Loecker   <jelle@develry.be>
@@ -2503,7 +2518,7 @@ ACom.setAfterMethod('ready', function loadCaosTab(element) {
 		// Replace all newlines with commas
 		code = code.trim().replace(/\n/g, ',');
 
-		that.capp.command(code, function gotResult(err, result) {
+		that.capp.ole.sendCAOS(code, function gotResult(err, result) {
 
 			if (err) {
 				output.classList.add('error');
@@ -2999,6 +3014,8 @@ ACom.setAfterMethod('ready', function getCreatures(callback) {
 
 		creatures.forEach(function eachCreature(creature) {
 
+			console.log('Creature name is', creature.name);
+
 			tasks.push(function doCreature(next) {
 
 				// Re-set the creature's name
@@ -3167,7 +3184,7 @@ ACom.setMethod(function nameCreature(creature, callback) {
  *
  * @author   Jelle De Loecker   <jelle@develry.be>
  * @since    0.1.1
- * @version  0.1.1
+ * @version  0.1.2
  */
 ACom.setMethod(function _initStoredCreature(creature, callback) {
 
@@ -3222,6 +3239,11 @@ ACom.setMethod(function _initStoredCreature(creature, callback) {
 	$row.on('click', function onClick(e) {
 
 		var corow = that.exported_creature_options_row;
+
+		// If this is a click on the same creature, close the actions row
+		if (corow.dataset.moniker == creature.moniker) {
+			return corow.remove();
+		}
 
 		// Set the moniker
 		corow.dataset.moniker = creature.moniker;
@@ -3320,6 +3342,11 @@ ACom.setMethod(function _initWarpedCreature(warped_record, callback) {
 			    $message = $('.warped-message', corow),
 			    html;
 
+			// If this is a click on the same creature, close the actions row
+			if (corow.dataset.moniker == creature.moniker) {
+				return corow.remove();
+			}
+
 			// Set the moniker
 			corow.dataset.moniker = creature.moniker;
 
@@ -3363,7 +3390,7 @@ ACom.setMethod(function _initWarpedCreature(warped_record, callback) {
  *
  * @author   Jelle De Loecker   <jelle@develry.be>
  * @since    0.1.0
- * @version  0.1.1
+ * @version  0.1.2
  */
 ACom.setMethod(function _initCreature(creature, callback) {
 
@@ -3421,6 +3448,11 @@ ACom.setMethod(function _initCreature(creature, callback) {
 	$row.on('click', function onClick(e) {
 
 		var corow = that.creature_options_row;
+
+		// If this is a click on the same creature, close the actions row
+		if (corow.dataset.moniker == creature.moniker) {
+			return corow.remove();
+		}
 
 		// Set the moniker
 		corow.dataset.moniker = creature.moniker;
@@ -3554,7 +3586,7 @@ ACom.setMethod(function _initCreature(creature, callback) {
  *
  * @author   Jelle De Loecker   <jelle@develry.be>
  * @since    0.1.1
- * @version  0.1.1
+ * @version  0.1.2
  */
 ACom.setMethod(function _initEgg(egg, callback) {
 
@@ -3611,6 +3643,11 @@ ACom.setMethod(function _initEgg(egg, callback) {
 	$row.on('click', function onClick(e) {
 
 		var corow = that.egg_options_row;
+
+		// If this is a click on the same egg, close the actions row
+		if (corow.dataset.moniker == egg.moniker) {
+			return corow.remove();
+		}
 
 		// Set the moniker
 		corow.dataset.moniker = egg.moniker;
