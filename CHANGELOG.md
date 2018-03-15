@@ -7,6 +7,8 @@
 * Show better errors when exporting/importing
 * Add setting to connect over a preferred port
 * Fix not being able to register a username once connected
+* Fix error where the program would block when a creature's name starts with a non alphabetical character
+* Add (very basic) CAOS tool
 
 ## 0.1.1 (2018-03-12)
 

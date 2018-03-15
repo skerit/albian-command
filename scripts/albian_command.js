@@ -63,6 +63,9 @@ var ACom = Function.inherits('Develry.Creatures.Base', function AlbianCommand() 
 	this.Name = this.getModel('Name');
 	this.WarpedCreature = this.getModel('WarpedCreature');
 
+	this.all_names = {};
+	this.lower_names = [];
+
 	this.init();
 
 	console.log('Created AlbianCommand instance:', this);
@@ -491,10 +494,10 @@ ACom.setMethod(function init() {
 		$this.parents('.children').addClass('active');
 
 		// Hide all tabs
-		$tabs.hide();
+		$tabs.removeClass('active');
 
 		// Show the target
-		$(target).show();
+		$(target).addClass('active');
 
 		// Possible callback name
 		cbname = 'load' + target.id.camelize() + 'Tab';
@@ -651,9 +654,6 @@ ACom.setCacheMethod(function doAsyncInit() {
 
 	var that = this;
 
-	this.all_names = {};
-	this.lower_names = [];
-
 	Function.series(function setNetworkStorageDir(next) {
 		that.babel.setMainStorageDir(that.resolvePath('albian-babel'), next);
 	}, function getSettings(next) {
@@ -714,6 +714,10 @@ ACom.setCacheMethod(function doAsyncInit() {
 
 				if (!doc.letter) {
 					return;
+				}
+
+				if (!that.all_names[doc.letter]) {
+					that.all_names[doc.letter] = [];
 				}
 
 				that.all_names[doc.letter].push(doc);
@@ -2424,6 +2428,64 @@ ACom.setAfterMethod('ready', function loadSettingsTab(settings_element) {
 });
 
 /**
+ * Load the caos tab
+ *
+ * @author   Jelle De Loecker   <jelle@develry.be>
+ * @since    0.1.2
+ * @version  0.1.2
+ */
+ACom.setAfterMethod('ready', function loadCaosTab(element) {
+
+	'use strict';
+
+	var that = this;
+
+	if (this._loaded_caos_tab) {
+		return;
+	}
+
+	this._loaded_caos_tab = true;
+
+	let output = element.querySelector('#caos-output'),
+	    input = element.querySelector('#caos-code'),
+	    exec  = element.querySelector('.execute-caos');
+
+	// Execute caos on click
+	exec.addEventListener('click', function onClick(e) {
+
+		var code = input.innerText;
+
+		// Replace all newlines with commas
+		code = code.trim().replace(/\n/g, ',');
+
+		that.capp.command(code, function gotResult(err, result) {
+
+			if (err) {
+				output.classList.add('error');
+				output.innerText = err.message;
+				return;
+			}
+
+			output.classList.remove('error');
+			output.innerText = JSON.stringify(result, null, 4);
+		});
+	});
+
+	input.addEventListener('keydown', function onKeydown(e) {
+
+		// Disabled for now
+		return;
+
+		if (e.code != 'Tab') {
+			return;
+		}
+
+		e.preventDefault();
+		input.innerHTML += '&nbsp;&nbsp;&nbsp;&nbsp;';
+	});
+});
+
+/**
  * Look for a name
  *
  * @author   Jelle De Loecker   <jelle@develry.be>
@@ -2469,7 +2531,7 @@ ACom.setMethod(function getName(name) {
  *
  * @author   Jelle De Loecker   <jelle@develry.be>
  * @since    0.1.0
- * @version  0.1.0
+ * @version  0.1.2
  */
 ACom.setMethod(function addName(name) {
 
@@ -2491,6 +2553,12 @@ ACom.setMethod(function addName(name) {
 		letter : letter,
 		name   : name
 	});
+
+	// Some "letters" won't exist because they're actually numbers
+	// or something else, so create them
+	if (!this.all_names[letter]) {
+		this.all_names[letter] = [];
+	}
 
 	this.all_names[letter].push(new_doc);
 	this.lower_names.push(name.toLowerCase());

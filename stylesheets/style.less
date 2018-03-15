@@ -99,7 +99,7 @@ x-svg {
 }
 
 // Hide tabpages by default
-.tabpage {
+.tabpage:not(.active) {
 	display: none;
 }
 
@@ -662,6 +662,8 @@ input[type="range"] {
 		align-self: stretch;
 	}
 }
+
+@import "caos.less";
 
 .st0{fill:#FFFFFF;}
 .st1{fill:#FFFFFF;stroke:#FFFFFF;stroke-width:1.5;stroke-linejoin:round;stroke-miterlimit:10;}

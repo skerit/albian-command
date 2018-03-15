@@ -1,0 +1,47 @@
+@caos-input-bg: @color-two;
+@caos-output-bg: @color-two;
+@caos-output-error: #523232;
+
+#caos.active {
+	.flexParent(column);
+	height: 100%;
+
+	> * {
+		.flexChild(1 1);
+		.flexParent(column);
+	}
+}
+
+.caos-input-label,
+.caos-output-label {
+	display: block;
+	.flexChild(0 1);
+	padding: 0 0 1rem;
+}
+
+#caos-code {
+	background-color: @caos-input-bg;
+	.flexChild(1 1);
+	padding: 1rem;
+}
+
+#caos-output {
+	background-color: @caos-output-bg;
+	.flexChild(1 1);
+	padding: 1rem;
+
+	&.error {
+		background-color: @caos-output-error;
+	}
+}
+
+.caos-input-wrapper {
+	position: relative;
+	margin-bottom: 1rem;
+}
+
+.execute-caos {
+	position: absolute;
+	right: 1rem;
+	bottom: 1rem;
+}
