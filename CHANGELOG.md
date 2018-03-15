@@ -1,4 +1,4 @@
-## 0.1.2 (WIP)
+## 0.1.2 (2018-03-15)
 
 * When opening a new world the current world name will be updated
 * Creatures that are no longer in the world will now be removed from the list correctly
