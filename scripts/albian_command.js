@@ -202,6 +202,7 @@ ACom.prepareProperty(function creature_options_row() {
 	    pick_up,
 	    teleport,
 	    language,
+	    force_age,
 	    pregnancy,
 	    inseminate,
 	    export_creature;
@@ -237,6 +238,9 @@ ACom.prepareProperty(function creature_options_row() {
 
 	infect = this.createActionElement('creature', 'infect', 'Infect with random bacteria', 'nats.s16', 0);
 	column.appendChild(infect);
+
+	force_age = this.createActionElement('creature', 'force_age', 'Force ageing', 'a05h.s16', 8);
+	column.appendChild(force_age);
 
 	return row;
 });
@@ -1405,6 +1409,27 @@ ACom.setMethod(function doInfectCreatureAction(action_element, creature) {
 
 	that.capp.doUnpaused(function doInfect(next) {
 		that.capp.command('inst,setv norn ' + creature.id + ',sys: cmnd 32807,endm', function done(err) {
+			next();
+			if (err) {
+				alertError(err);
+			}
+		});
+	});
+});
+
+/**
+ * Force age this creature
+ *
+ * @author   Jelle De Loecker   <jelle@develry.be>
+ * @since    0.1.2
+ * @version  0.1.2
+ */
+ACom.setMethod(function doForceAgeCreatureAction(action_element, creature) {
+
+	var that = this;
+
+	that.capp.doUnpaused(function doInfect(next) {
+		that.capp.command('inst,setv norn ' + creature.id + ',sys: cmnd 32865,endm', function done(err) {
 			next();
 			if (err) {
 				alertError(err);

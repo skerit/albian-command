@@ -13,7 +13,8 @@
 * Clicking on the same creature/egg row will hide the actions row
 * Added Creature select action
 * Fix certain s16 sprites being too big on first show (object-fit bug)
-* Add action to infect current norn with random bacteria
+* Add action to infect creature with random bacteria
+* Add action to force ageing of creature
 
 ## 0.1.1 (2018-03-12)
 
