@@ -1445,7 +1445,7 @@ ACom.setMethod(function doForceAgeCreatureAction(action_element, creature) {
  *
  * @author   Jelle De Loecker   <jelle@develry.be>
  * @since    0.1.1
- * @version  0.1.1
+ * @version  0.2.2
  *
  * @param    {HTMLElement}       action_element
  * @param    {Creatures.Export}  exported_creature
@@ -1460,8 +1460,11 @@ ACom.setMethod(function doImportExportedCreatureAction(action_element, exported_
 			return alert('Import error: ' + err);
 		}
 
+		// If no s16 file is available, see if it is because we couldn't load the gene
 		if (!s16) {
-			return alert('Can not import this creature: breed sprites not found');
+			if (exported_creature.genome.genes.length > 50) {
+				return alert('Can not import this creature: breed sprites not found');
+			}
 		}
 
 		exported_creature.import(function done(err) {
