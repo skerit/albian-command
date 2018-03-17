@@ -1,3 +1,7 @@
+## 0.1.3 (2018-03-17)
+
+* Add ability to send warps to off-line users
+
 ## 0.1.2 (2018-03-15)
 
 * When opening a new world the current world name will be updated

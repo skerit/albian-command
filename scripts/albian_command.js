@@ -710,9 +710,7 @@ ACom.setCacheMethod(function doAsyncInit() {
 	}, function loginToNetwork(next) {
 
 		if (that.babel_preferred_port) {
-			// Apparently discovery-swarm does not like being told which
-			// port to use, so disable this for now
-			//that.babel.preferred_port = that.babel_preferred_port;
+			that.babel.preferred_port = that.babel_preferred_port;
 		}
 
 		if (!that.babel_password) {
@@ -1497,7 +1495,7 @@ ACom.setMethod(function doImportWarpedCreatureAction(action_element, warped_crea
  *
  * @author   Jelle De Loecker   <jelle@develry.be>
  * @since    0.1.1
- * @version  0.1.2
+ * @version  0.1.3
  *
  * @param    {HTMLElement}       action_element
  * @param    {Creatures.Export}  exported_creature
@@ -1506,12 +1504,15 @@ ACom.setMethod(function doWarpExportedCreatureAction(action_element, exported_cr
 
 	var that = this,
 	    $this = $(action_element),
+	    usernames,
 	    offset,
 	    result,
 	    items,
+	    temp,
 	    key,
 	    i;
 
+	usernames = this.babel.getClaimDb('username');
 	result = {};
 	items = {};
 
@@ -1524,9 +1525,6 @@ ACom.setMethod(function doWarpExportedCreatureAction(action_element, exported_cr
 		}
 	}
 
-	// sort the peers
-	this.babel.peers.sortByPath('username');
-
 	// Iterate again
 	for (i = 0; i < this.babel.peers.length; i++) {
 		let peer = this.babel.peers[i];
@@ -1535,11 +1533,55 @@ ACom.setMethod(function doWarpExportedCreatureAction(action_element, exported_cr
 			continue;
 		}
 
-		items[peer.id] = {
+		items[peer.public_key] = {
 			name   : 'Warp creature to ' + peer.username.encodeHTML(),
 			peer   : peer
 		};
 	}
+
+	usernames.forEach(function eachValue(trans, key) {
+
+		// Items are stored under 2 values: username & hex
+		if (key == trans.owner_hex) {
+			return;
+		}
+
+		items[trans.owner_hex] = {
+			name       : key,
+			public_key : trans.owner_hex
+		};
+	});
+
+	// Turn the array into an object
+	temp = Object.dissect(items);
+
+	// Sort it
+	temp.sort(function sorting(a, b) {
+		if (!a.value || !a.value.name) {
+			return -1;
+		}
+
+		if (!b.value || !b.value.name) {
+			return 1;
+		}
+
+		return a.value.name.toLowerCase() > b.value.name.toLowerCase();
+	});
+
+	items = {};
+
+	temp.forEach(function eachEntry(entry) {
+
+		if (!entry.value || !entry.value.name) {
+			return;
+		}
+
+		if (entry.value.name == 'Actest') {
+			return;
+		}
+
+		items[entry.key] = entry.value;
+	});
 
 	result.callback = function onClick(key, options) {
 		var item = items[key],
@@ -1549,36 +1591,49 @@ ACom.setMethod(function doWarpExportedCreatureAction(action_element, exported_cr
 			peer = item.peer;
 		}
 
-		if (!peer) {
-			return;
-		}
-
 		let msg = prompt('Please provide a message for the receiver');
 
 		if (msg == null) {
 			return;
 		}
 
-		let bomb = Function.timebomb(5000, function done(err) {
-			alert('Warp timed out!');
-		});
+		if (peer) {
+			let bomb = Function.timebomb(5000, function done(err) {
+				alert('Warp timed out!');
+			});
 
-		peer.talk('warp_creature', {
-			message : msg,
-			buffer  : exported_creature.buffer
-		}, function done(err, response) {
+			peer.talk('warp_creature', {
+				message : msg,
+				buffer  : exported_creature.buffer
+			}, function done(err, response) {
 
-			if (bomb.exploded) {
-				return;
+				if (bomb.exploded) {
+					return;
+				}
+
+				bomb.defuse();
+
+				if (err) {
+					return alert('Error warping: ' + err);
+				}
+
+				console.log('Warp response:', response);
+			});
+
+			return;
+		}
+
+		if (!item.public_key) {
+			return alert('Could not locate destination');
+		}
+
+		// Request the network to forward our (public) message
+		that.babel.requestForward(item.public_key, {
+			talk    : 'warp_creature',
+			data    : {
+				message : msg,
+				buffer  : exported_creature.buffer
 			}
-
-			bomb.defuse();
-
-			if (err) {
-				return alert('Error warping: ' + err);
-			}
-
-			console.log('Warp response:', response);
 		});
 	};
 
@@ -3812,5 +3867,5 @@ ACom.addSetting('albian_babel_network_username', {
 ACom.addSetting('albian_babel_network_preferred_port', {
 	title    : 'The preferred port to connect to the network on',
 	type     : 'number',
-	hidden   : true
+	hidden   : false
 });
