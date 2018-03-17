@@ -1,3 +1,7 @@
+## 0.1.4 (WIP)
+
+* Add autosave feature for `blueberry4$` users
+
 ## 0.1.3 (2018-03-17)
 
 * Add ability to send warps to off-line users

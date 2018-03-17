@@ -5,7 +5,7 @@ var nwgui = require('nw.gui');
  *
  * @author   Jelle De Loecker   <jelle@develry.be>
  * @since    0.1.0
- * @version  0.1.3
+ * @version  0.1.4
  */
 var ACom = Function.inherits('Develry.Creatures.Base', function AlbianCommand() {
 
@@ -41,6 +41,9 @@ var ACom = Function.inherits('Develry.Creatures.Base', function AlbianCommand() 
 
 	// The log textarea
 	this.log_el = document.getElementById('log-output');
+
+	// The time it was last saved
+	this.last_saved = Date.now();
 
 	// Logs of last type
 	this.log_history = {};
@@ -743,6 +746,20 @@ ACom.setMethod(function init() {
 			});
 		});
 	});
+
+	setInterval(function doSave() {
+		if (that.getSetting('auto_save_blueberry')) {
+			that.log('Going to save game...');
+
+			that.capp.saveGame(function done(err) {
+				if (err) {
+					that.log('Failed to save game: ' + err);
+				} else {
+					that.log('Saved game');
+				}
+			});
+		}
+	}, 60 * 5 * 1000);
 
 	setInterval(function doUpdate() {
 		that.update();
@@ -1852,7 +1869,7 @@ ACom.setMethod(function setSetting(name, value) {
 
 	var doc = this.getSettingDocument(name);
 
-	that.log('Storing "' + name + '" setting with value "' + value + '"');
+	this.log('Storing "' + name + '" setting with value "' + value + '"');
 
 	doc.value = value;
 	doc.save();
@@ -3955,9 +3972,12 @@ ACom.addSetting('albian_babel_network_username', {
 	disabled : true
 });
 
-// We hide this for now because apparently discovery-swarm
-// doesn't like being told what port to use
 ACom.addSetting('albian_babel_network_preferred_port', {
 	title    : 'The preferred port to connect to the network on',
 	type     : 'number'
+});
+
+ACom.addSetting('auto_save_blueberry', {
+	title    : 'Save the game every 5 minutes (blueberry4$ cheat required)',
+	type     : 'boolean'
 });
