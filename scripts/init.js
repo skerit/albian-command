@@ -188,6 +188,8 @@ function debug(message) {
 		result += entry + '\n';
 	}
 
+	acom.log(result);
+
 	alert(result);
 }
 
@@ -212,6 +214,8 @@ function alertError(err, prefix) {
 	} else {
 		result += err;
 	}
+
+	acom.log(result);
 
 	console.error('Show error:', err, result);
 	alert(result);

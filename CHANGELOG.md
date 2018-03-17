@@ -1,6 +1,7 @@
 ## 0.1.3 (2018-03-17)
 
 * Add ability to send warps to off-line users
+* Add a log tab
 
 ## 0.1.2 (2018-03-15)
 

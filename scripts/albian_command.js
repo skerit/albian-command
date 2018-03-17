@@ -5,7 +5,7 @@ var nwgui = require('nw.gui');
  *
  * @author   Jelle De Loecker   <jelle@develry.be>
  * @since    0.1.0
- * @version  0.1.0
+ * @version  0.1.3
  */
 var ACom = Function.inherits('Develry.Creatures.Base', function AlbianCommand() {
 
@@ -38,6 +38,13 @@ var ACom = Function.inherits('Develry.Creatures.Base', function AlbianCommand() 
 
 	// The #warped anchor
 	this.$warped     = $('a[href="#warped"]');
+
+	// The log textarea
+	this.log_el = document.getElementById('log-output');
+
+	// Logs of last type
+	this.log_history = {};
+	this.log_lines = [];
 
 	// All the settings
 	this.settings = {};
@@ -474,15 +481,77 @@ ACom.setProperty(function speed() {
 });
 
 /**
+ * Output to the log
+ *
+ * @author   Jelle De Loecker   <jelle@develry.be>
+ * @since    0.1.3
+ * @version  0.1.3
+ */
+ACom.setMethod(function log(type, message) {
+
+	var hist;
+
+	if (arguments.length == 1) {
+		message = type;
+		type = 'default';
+	}
+
+	if (!this.log_history[type]) {
+		this.log_history[type] = {
+			value : null,
+			count : 0
+		};
+	}
+
+	hist = this.log_history[type];
+
+	if (hist.value == message) {
+		hist.count++;
+
+		if (hist.count > 3) {
+			if (hist.count % 10 == 0) {
+				message += ' (repeat nr ' + hist.count + ')';
+			} else {
+				return;
+			}
+		}
+	} else {
+		hist.value = message;
+		hist.count = 1;
+	}
+
+	// Don't print too many duplicate lines
+	if (type == 'default' && this.log_lines.indexOf(message) > -1) {
+		return;
+	}
+
+	this.log_lines.push(message);
+
+	if (this.log_lines.length > 15) {
+		this.log_lines.shift();
+	}
+
+	if (this.log_el.value) {
+		this.log_el.value += '\n';
+	}
+
+	message = '[' + Date.create().format('Y-m-d H:i:s') + '] ' + message;
+
+	this.log_el.value += message;
+});
+
+/**
  * Initialize the app
  *
  * @author   Jelle De Loecker   <jelle@develry.be>
  * @since    0.1.0
- * @version  0.1.2
+ * @version  0.1.3
  */
 ACom.setMethod(function init() {
 
 	var that = this;
+
+	this.log('Initializing Albian Command');
 
 	this.doAsyncInit();
 
@@ -491,6 +560,7 @@ ACom.setMethod(function init() {
 
 	// Listen for world name changes
 	this.capp.on('world_name', function gotNewName(name) {
+		that.log('Got world name "' + name + '"');
 		that.world_name = name;
 	});
 
@@ -593,7 +663,14 @@ ACom.setMethod(function init() {
 
 	// Listen for peers
 	this.babel.on('peer', function gotPeer(peer) {
+
+		if (peer.ip) {
+			that.log('Found new peer: ' + peer.ip);
+		}
+
 		peer.onTalk('warp_creature', function receivedWarp(data, callback) {
+
+			that.log('Incoming warp...');
 
 			if (!data || !data.buffer) {
 				return callback(new Error('You sent invalid warp data'));
@@ -1189,6 +1266,8 @@ ACom.setMethod(function doTeleportAction(action_element, creature) {
 	var that = this,
 	    $this = $(action_element);
 
+	that.log('Showing teleport menu: getting favourite locations...');
+
 	this.getFavouriteLocations(function gotLocations(err, locations) {
 
 		var offset,
@@ -1200,6 +1279,8 @@ ACom.setMethod(function doTeleportAction(action_element, creature) {
 		if (err) {
 			return alert('Error: ' + err);
 		}
+
+		that.log('Showing teleport menu: got ' + locations.length);
 
 		result = {};
 		items = {};
@@ -1215,6 +1296,7 @@ ACom.setMethod(function doTeleportAction(action_element, creature) {
 
 			creature.move(loc.x, loc.y, function done(err) {
 				if (err) {
+					that.log('Error moving creature: ' + err.message);
 					console.error('Error moving creature:', err);
 				}
 			})
@@ -1775,6 +1857,8 @@ ACom.setMethod(function getModel(name) {
 ACom.setMethod(function setSetting(name, value) {
 
 	var doc = this.getSettingDocument(name);
+
+	that.log('Storing "' + name + '" setting with value "' + value + '"');
 
 	doc.value = value;
 	doc.save();
@@ -2665,6 +2749,17 @@ ACom.setAfterMethod('ready', function loadCaosTab(element) {
 });
 
 /**
+ * Load the logging tab
+ *
+ * @author   Jelle De Loecker   <jelle@develry.be>
+ * @since    0.1.2
+ * @version  0.1.2
+ */
+ACom.setAfterMethod('ready', function loadLogTab(element) {
+
+});
+
+/**
  * Look for a name
  *
  * @author   Jelle De Loecker   <jelle@develry.be>
@@ -3131,6 +3226,8 @@ ACom.setAfterMethod('ready', function getCreatures(callback) {
 			return callback(err);
 		}
 
+		that.log('got_creatures', 'Got ' + creatures.length + ' creatures');
+
 		creatures.forEach(function eachCreature(creature) {
 
 			tasks.push(function doCreature(next) {
@@ -3592,6 +3689,8 @@ ACom.setMethod(function _initCreature(creature, callback) {
 
 	// When the creature is removed, so should the elements
 	creature.once('removed', function whenRemoved() {
+
+		that.log('Creature ' + creature.moniker + ' has been removed');
 
 		// Unset the elements
 		creature.acom_elements = null;
