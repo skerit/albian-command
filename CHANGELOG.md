@@ -2,6 +2,7 @@
 
 * Add ability to send warps to off-line users
 * Add a log tab
+* Enable setting a preferred port
 
 ## 0.1.2 (2018-03-15)
 

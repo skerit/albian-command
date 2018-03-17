@@ -623,12 +623,6 @@ ACom.setMethod(function init() {
 
 		var transaction;
 
-		// If we don't have a preferred port yet,
-		// remember this one for the future
-		if (!that.babel_preferred_port) {
-			that.babel_preferred_port = that.babel.port;
-		}
-
 		// If we logged in during a claim, the username will be set anyway
 		if (claimed) {
 			return;
@@ -2752,11 +2746,11 @@ ACom.setAfterMethod('ready', function loadCaosTab(element) {
  * Load the logging tab
  *
  * @author   Jelle De Loecker   <jelle@develry.be>
- * @since    0.1.2
- * @version  0.1.2
+ * @since    0.1.3
+ * @version  0.1.3
  */
 ACom.setAfterMethod('ready', function loadLogTab(element) {
-
+	// Doesn't really need any initiating for now
 });
 
 /**
@@ -3965,6 +3959,5 @@ ACom.addSetting('albian_babel_network_username', {
 // doesn't like being told what port to use
 ACom.addSetting('albian_babel_network_preferred_port', {
 	title    : 'The preferred port to connect to the network on',
-	type     : 'number',
-	hidden   : false
+	type     : 'number'
 });
