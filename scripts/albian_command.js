@@ -547,7 +547,7 @@ ACom.setMethod(function log(type, message) {
  *
  * @author   Jelle De Loecker   <jelle@develry.be>
  * @since    0.1.0
- * @version  0.1.3
+ * @version  0.1.4
  */
 ACom.setMethod(function init() {
 
@@ -763,6 +763,12 @@ ACom.setMethod(function init() {
 	setInterval(function doUpdate() {
 		that.update();
 	}, 5000);
+
+	setInterval(function fixPowerups() {
+		if (that.getSetting('keep_powerups_enabled')) {
+			that.capp.enablePowerups();
+		}
+	}, 45 * 1000);
 });
 
 /**
@@ -1808,6 +1814,9 @@ ACom.setMethod(function doResumeEggAction(action_element, egg) {
  * @version  0.1.4
  */
 ACom.setMethod(function doEnablePowerupsSettingAction(action_element) {
+
+	// Make sure the powerups remain enabled
+	this.setSetting('keep_powerups_enabled', true);
 
 	this.capp.enablePowerups(function done(err) {
 
@@ -4021,4 +4030,9 @@ ACom.addSetting('unpause_eggs', {
 ACom.addSetting('max_unpaused_eggs', {
 	title    : 'Maximum number of eggs that can be unpaused at once',
 	type     : 'number'
+});
+
+ACom.addSetting('keep_powerups_enabled', {
+	title    : 'Keep powerups enabled',
+	type     : 'boolean'
 });
