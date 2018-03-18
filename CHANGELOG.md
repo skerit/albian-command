@@ -1,6 +1,7 @@
 ## 0.1.4 (WIP)
 
 * Add autosave feature for `blueberry4$` users
+* Add `unpause_eggs` feature
 
 ## 0.1.3 (2018-03-17)
 

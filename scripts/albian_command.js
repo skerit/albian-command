@@ -315,7 +315,6 @@ ACom.prepareProperty(function exported_creature_options_row() {
 	return row;
 });
 
-
 /**
  * The warped creature actions row
  *
@@ -3206,7 +3205,7 @@ ACom.setAfterMethod('ready', function getWorldName(callback) {
  *
  * @author   Jelle De Loecker   <jelle@develry.be>
  * @since    0.1.0
- * @version  0.1.0
+ * @version  0.1.4
  */
 ACom.setAfterMethod('ready', function getCreatures(callback) {
 
@@ -3221,9 +3220,9 @@ ACom.setAfterMethod('ready', function getCreatures(callback) {
 	this.update_count++;
 
 	// If the setting to make the creatures remember their name is on,
-	// Re-set their name every 1.5 minutes
+	// Re-set their name every 15 minutes
 	if (this.getSetting('make_creatures_remember_their_name')) {
-		if (this.update_count % 6 == 0) {
+		if (this.update_count % 60 == 0) {
 			remember_names = true;
 		}
 	}
@@ -3245,6 +3244,7 @@ ACom.setAfterMethod('ready', function getCreatures(callback) {
 
 				// Re-set the creature's name
 				if (remember_names && creature.has_name) {
+					that.log('Making creature ' + creature.name + 'remember its name');
 					creature.setName(creature.name);
 				}
 
@@ -3295,8 +3295,40 @@ ACom.setAfterMethod('ready', function getEggs(callback) {
 
 		Function.parallel(tasks, function done(err) {
 
+			var unpaused_count = 0,
+			    paused_count = 0;
+
 			if (err) {
 				return callback(err);
+			}
+
+			eggs.forEach(function eachEgg(egg) {
+				if (egg.paused) {
+					paused_count++;
+				} else {
+					unpaused_count;
+				}
+			});
+
+			that.log('eggs', 'There are currently ' + eggs.length + ' eggs in the world: ' + paused_count + ' are paused, ' + unpaused_count + ' are unpaused');
+
+			let max_unpaused = Number(that.getSetting('max_unpaused_eggs')),
+			    do_unpause = that.getSetting('unpause_eggs');
+
+			if (do_unpause && paused_count) {
+				eggs.forEach(function eachEgg(egg) {
+
+					if (max_unpaused && unpaused_count >= max_unpaused) {
+						return;
+					}
+
+					if (egg.paused) {
+						that.log('Resuming paused egg ' + egg.moniker);
+						egg.resume();
+						paused_count--;
+						unpaused_count++;
+					}
+				});
 			}
 
 			callback(null, eggs);
@@ -3980,4 +4012,14 @@ ACom.addSetting('albian_babel_network_preferred_port', {
 ACom.addSetting('auto_save_blueberry', {
 	title    : 'Save the game every 5 minutes (blueberry4$ cheat required)',
 	type     : 'boolean'
+});
+
+ACom.addSetting('unpause_eggs', {
+	title    : 'Automatically unpause eggs',
+	type     : 'boolean'
+});
+
+ACom.addSetting('max_unpaused_eggs', {
+	title    : 'Maximum number of eggs that can be unpaused at once',
+	type     : 'number'
 });
