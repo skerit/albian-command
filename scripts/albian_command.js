@@ -436,7 +436,7 @@ ACom.prepareProperty(function all_settings_actions_row() {
 	row.classList.add('actions-row');
 	row.appendChild(column);
 
-	states = this.createActionElement('setting', 'toggle_powerups', 'Toggle Powerups', 'powp.s16', 0);
+	states = this.createActionElement('setting', 'enable_powerups', 'Enable Powerups', 'powp.s16', 0);
 	column.appendChild(states);
 
 	return row;
@@ -1805,16 +1805,15 @@ ACom.setMethod(function doResumeEggAction(action_element, egg) {
  *
  * @author   Jelle De Loecker   <jelle@develry.be>
  * @since    0.1.2
- * @version  0.1.2
+ * @version  0.1.4
  */
-ACom.setMethod(function doTogglePowerupsSettingAction(action_element) {
+ACom.setMethod(function doEnablePowerupsSettingAction(action_element) {
 
-	this.capp.command('sys: cmnd 32774', function done(err) {
+	this.capp.enablePowerups(function done(err) {
 
 		if (err) {
 			alertError(err);
 		}
-
 	});
 });
 
