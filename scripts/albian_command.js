@@ -396,8 +396,6 @@ ACom.prepareProperty(function peer_options_row() {
 	column.setAttribute('colspan', this.peers_headers.length);
 	row.appendChild(column);
 
-	//column.textContent = 'test';
-
 	return row;
 });
 
@@ -406,15 +404,20 @@ ACom.prepareProperty(function peer_options_row() {
  *
  * @author   Jelle De Loecker   <jelle@develry.be>
  * @since    0.1.1
- * @version  0.1.1
+ * @version  0.1.4
  */
 ACom.prepareProperty(function all_eggs_actions_row() {
+
 	var row = document.createElement('tr'),
-	    column = document.createElement('td');
+	    column = document.createElement('td'),
+	    finder;
 
 	// Indicate this is the actions row
 	row.classList.add('actions-row');
 	row.appendChild(column);
+
+	finder = this.createActionElement('all_eggs', 'find', 'Line up eggs by the incubator', 'tele.s16', 0);
+	column.appendChild(finder);
 
 	return row;
 });
@@ -1803,6 +1806,46 @@ ACom.setMethod(function doResumeEggAction(action_element, egg) {
 		if (err) {
 			alert('Error resuming egg: ' + err);
 		}
+	});
+});
+
+/**
+ * Find all eggs and move them to the incubator
+ *
+ * @author   Jelle De Loecker   <jelle@develry.be>
+ * @since    0.1.4
+ * @version  0.1.4
+ */
+ACom.setMethod(function doFindAllEggsAction(action_element) {
+
+	var that = this,
+	    code;
+
+	that.log('Finding all egs...');
+
+	code = [
+		'inst',
+		'setv var0 4750',
+		'enum 2 5 2',
+			'doif pose le 3',
+				'addv var0 20',
+				'mvto var0 720',
+				'setv grav 1',
+				'sys: camt',
+				'tick 0',
+			'endi',
+		'next',
+		'endm'
+	];
+
+	this.capp.command(code.join(','), function done(err) {
+
+		if (err) {
+			that.log('Error finding all eggs: ' + err);
+			return alertError(err);
+		}
+
+		that.log('All eggs have been found');
 	});
 });
 

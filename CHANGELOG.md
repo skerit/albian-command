@@ -4,6 +4,7 @@
 * Add `unpause_eggs` feature
 * Turn "Toggle Powerups" into "Enable Powerups"
 * Add `keep_powerups_enabled` settings, because they seem to revert back to their original state
+* Add action to line up all eggs by the incubator
 
 ## 0.1.3 (2018-03-17)
 
