@@ -669,6 +669,22 @@ ACom.setMethod(function init() {
 	// Listen for errors
 	this.capp.on('error_dialogbox', function gotDialogError(data, callback, last_error) {
 
+		var message,
+		    entry,
+		    i;
+
+		if (data) {
+			for (i = 0; i < data.length; i++) {
+				entry = data[i];
+
+				if (entry.title) {
+					message = entry.title;
+				}
+			}
+		}
+
+		that.log('An error dialogbox appeared in C2:', message);
+
 		if (!that.getSetting('close_dialog_boxes')) {
 			alert('A dialog box has appeared, please close it manually');
 			callback();
