@@ -81,6 +81,26 @@ window.addEventListener('focus', function onFocus(e) {
 });
 
 /**
+ * Redirect properties
+ *
+ * @author   Jelle De Loecker   <jelle@develry.be>
+ * @since    0.1.4
+ * @version  0.1.4
+ */
+function redirectProperties(new_class, properties, target) {
+
+	var that = new_class;
+
+	properties.forEach(function eachTrait(prop) {
+		that.setProperty(prop, function getter() {
+			return this[target][prop];
+		}, function setter(val) {
+			return this[target][prop] = val;
+		});
+	});
+};
+
+/**
  * Choose a directory
  *
  * @author   Jelle De Loecker   <jelle@develry.be>

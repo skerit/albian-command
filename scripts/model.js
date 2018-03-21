@@ -119,11 +119,16 @@ Model.setStatic(function addField(name) {
  *
  * @author   Jelle De Loecker   <jelle@develry.be>
  * @since    0.1.0
- * @version  0.1.0
+ * @version  0.1.4
  */
-Model.setMethod(function find(conditions, callback) {
+Model.setMethod(function find(conditions, from_cache, callback) {
 
 	var that = this;
+
+	if (typeof from_cache == 'function') {
+		callback = from_cache;
+		from_cache = false;
+	}
 
 	if (typeof conditions == 'function') {
 		callback = conditions;
@@ -146,9 +151,13 @@ Model.setMethod(function find(conditions, callback) {
 
 			if (that.cache[entry._id]) {
 				record = that.cache[entry._id];
-				record.updateFromDb(entry);
+
+				if (!from_cache) {
+					record.updateFromDb(entry);
+				}
 			} else {
 				record = that.createRecord(entry);
+				that.cache[entry._id] = record;
 			}
 
 			results.push(record);

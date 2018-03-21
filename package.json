@@ -13,7 +13,7 @@
 	"license": "GPL-3.0",
 	"dependencies": {
 		"albian-babel" : "~0.1.3",
-		"creatures"    : "~0.2.3",
+		"creatures"    : "~0.2.4",
 		"less"         : "3.0.0",
 		"nedb"         : "~1.8.0"
 	},

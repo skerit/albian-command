@@ -71,6 +71,8 @@ var ACom = Function.inherits('Develry.Creatures.Base', function AlbianCommand() 
 	// Models
 	this.Setting = this.getModel('Setting');
 	this.Name = this.getModel('Name');
+	this.Creature = this.getModel('Creature');
+	this.StoredCreature = this.getModel('StoredCreature');
 	this.WarpedCreature = this.getModel('WarpedCreature');
 
 	this.all_names = {};
@@ -111,9 +113,9 @@ ACom.setProperty('creatures_headers', ['picture', 'name', 'age', 'lifestage', 'h
  *
  * @author   Jelle De Loecker   <jelle@develry.be>
  * @since    0.1.1
- * @version  0.1.1
+ * @version  0.1.4
  */
-ACom.setProperty('stored_creatures_headers', ['picture', 'name', 'age', 'lifestage', 'health', 'status', 'moniker']);
+ACom.setProperty('stored_creatures_headers', ['picture', 'name', 'stored', 'age', 'lifestage', 'health', 'status', 'moniker']);
 
 /**
  * The table headers of the warped creatures list
@@ -513,7 +515,13 @@ ACom.setMethod(function log(type, message) {
 	if (hist.value == message) {
 		hist.count++;
 
-		if (hist.count > 3) {
+		if (hist.count > 20) {
+			if (hist.count % 100 == 0) {
+				message += ' (repeat nr ' + hist.count + ')';
+			} else {
+				return;
+			}
+		} else if (hist.count > 3) {
 			if (hist.count % 10 == 0) {
 				message += ' (repeat nr ' + hist.count + ')';
 			} else {
@@ -554,9 +562,16 @@ ACom.setMethod(function log(type, message) {
  */
 ACom.setMethod(function init() {
 
-	var that = this;
+	var that = this,
+	    log_informer;
 
 	this.log('Initializing Albian Command');
+
+	log_informer = new Informer();
+	Creatures.log_informer = log_informer;
+	log_informer.on('log', function onLog(type, class_name, args) {
+		that.log('[' + type + '] in ' + class_name + ' ' + args.join(' ').trim());
+	});
 
 	this.doAsyncInit();
 
@@ -759,6 +774,11 @@ ACom.setMethod(function init() {
 				} else {
 					that.log('Saved game');
 				}
+
+				// Saving the world disables the powerups
+				if (that.getSetting('keep_powerups_enabled')) {
+					that.capp.enablePowerups();
+				}
 			});
 		}
 	}, 60 * 5 * 1000);
@@ -767,11 +787,13 @@ ACom.setMethod(function init() {
 		that.update();
 	}, 5000);
 
+	// Force enable the powerups in case a manual save was performed
+	// (Saving disables the powerups again)
 	setInterval(function fixPowerups() {
 		if (that.getSetting('keep_powerups_enabled')) {
 			that.capp.enablePowerups();
 		}
-	}, 45 * 1000);
+	}, 60 * 1000);
 });
 
 /**
@@ -1008,14 +1030,66 @@ ACom.setMethod(function getDatabase(name) {
 });
 
 /**
+ * Get a creature record
+ *
+ * @author   Jelle De Loecker   <jelle@develry.be>
+ * @since    0.1.4
+ * @version  0.1.4
+ *
+ * @param    {Develry.Creatures.Creature}   creature
+ */
+ACom.setMethod(function getCreatureRecord(creature, callback) {
+
+	var that = this;
+
+	this.Creature.find({moniker: creature.moniker}, true, function gotRecord(err, record) {
+
+		if (err) {
+			return callback(err);
+		}
+
+		record = record[0]
+
+		if (!record) {
+			record = that.Creature.createRecord();
+		}
+
+		record.attachCreature(creature);
+
+		return callback(null, record);
+	});
+});
+
+/**
  * Get a creature
  *
  * @author   Jelle De Loecker   <jelle@develry.be>
  * @since    0.1.0
- * @version  0.1.0
+ * @version  0.1.4
  */
 ACom.setMethod(function getCreature(id_or_moniker, callback) {
-	return this.capp.getCreature(id_or_moniker, callback);
+
+	var that = this;
+
+	this.capp.getCreature(id_or_moniker, function gotCreature(err, creature) {
+
+		if (err) {
+			return callback(err);
+		}
+
+		return callback(null, creature);
+
+		that.getCreatureRecord(creature, function gotRecord(err, record) {
+
+			if (err) {
+				return callback(err);
+			}
+
+			creature.ac_record = record;
+
+			callback(null, creature);
+		});
+	});
 });
 
 /**
@@ -2032,10 +2106,33 @@ ACom.setAfterMethod('ready', function loadStoredTab(element) {
 				// Remember this export instance for later
 				that.local_exports[file] = instance;
 
-				instance.load(function loaded(err) {
+				Function.parallel(function loadInstance(next) {
+					instance.load(function loaded(err) {
+						if (err) {
+							console.error('Failed to load file: ' + file);
+							return next();
+						}
+
+						next(null, instance);
+					});
+				}, function loadRecord(next) {
+					that.StoredCreature.find({filename: file.before('.exp')}, true, function gotRecord(err, record) {
+
+						if (err) {
+							return next(err);
+						}
+
+						if (!record || !record[0]) {
+							return next();
+						}
+
+						instance.ac_record = record[0];
+						next();
+					});
+				}, function done(err) {
+
 					if (err) {
-						console.error('Failed to load file: ' + file);
-						return next();
+						return next(err);
 					}
 
 					next(null, instance);
@@ -2048,6 +2145,8 @@ ACom.setAfterMethod('ready', function loadStoredTab(element) {
 			if (err) {
 				return alert('Error reading stored creatures: ' + err);
 			}
+
+			results.sortByPath(-1, 'ac_record.created');
 
 			for (let i = 0; i < results.length; i++) {
 				let instance = results[i];
@@ -2535,7 +2634,7 @@ ACom.setMethod(function exportAllTo(dirpath, callback) {
  *
  * @author   Jelle De Loecker   <jelle@develry.be>
  * @since    0.1.1
- * @version  0.1.1
+ * @version  0.1.4
  *
  * @param    {Creature}   creature
  * @param    {String}     dirpath
@@ -2559,7 +2658,7 @@ ACom.setMethod(function exportCreatureTo(creature, dirpath, callback) {
 	export_path = libpath.resolve(dirpath, filename);
 
 	creature.exportTo(export_path, function exported(err, result) {
-		callback(err, result);
+		callback(err, result, filename);
 	});
 });
 
@@ -2595,7 +2694,7 @@ ACom.setMethod(function doExportAllAction() {
  *
  * @author   Jelle De Loecker   <jelle@develry.be>
  * @since    0.1.1
- * @version  0.1.1
+ * @version  0.1.4
  */
 ACom.setMethod(function doExportCreatureAction(element, creature) {
 
@@ -2607,12 +2706,20 @@ ACom.setMethod(function doExportCreatureAction(element, creature) {
 			return alertError(err, 'Error creating directory');
 		}
 
-		that.exportCreatureTo(creature, that.paths.local_exports, function exported(err) {
+		that.exportCreatureTo(creature, that.paths.local_exports, function exported(err, result, filename) {
 
 			if (err) {
 				return alertError(err, 'Error exporting');
 			}
 
+			// Create a stored creature record
+			let record = that.StoredCreature.createRecord();
+
+			// Attach this creature & save on next tick
+			record.attachCreature(creature);
+
+			// Also set the filename
+			record.filename = filename;
 		});
 	});
 });
@@ -3290,26 +3397,34 @@ ACom.setAfterMethod('ready', function getCreatures(callback) {
 		that.log('got_creatures', 'Got ' + creatures.length + ' creatures');
 
 		creatures.forEach(function eachCreature(creature) {
-
 			tasks.push(function doCreature(next) {
+				that.getCreatureRecord(creature, function gotRecord(err, record) {
 
-				// Re-set the creature's name
-				if (remember_names && creature.has_name) {
-					that.log('Making creature ' + creature.name + 'remember its name');
-					creature.setName(creature.name);
-				}
+					// Re-set the creature's name
+					if (remember_names && creature.has_name) {
+						that.log('Making creature ' + creature.name + 'remember its name');
+						creature.setName(creature.name);
+					}
 
-				that._initCreature(creature, next);
+					that._initCreature(creature, function done(err) {
+
+						if (err) {
+							return next(err);
+						}
+
+						next(null, creature);
+					});
+				});
 			});
 		});
 
-		Function.parallel(tasks, function done(err) {
+		Function.parallel(tasks, function done(err, results) {
 
 			if (err) {
 				return callback(err);
 			}
 
-			callback(null, creatures);
+			callback(null, results);
 		});
 	});
 });
@@ -3492,7 +3607,7 @@ ACom.setMethod(function nameCreature(creature, callback) {
  *
  * @author   Jelle De Loecker   <jelle@develry.be>
  * @since    0.1.1
- * @version  0.1.2
+ * @version  0.1.4
  */
 ACom.setMethod(function _initStoredCreature(creature, callback) {
 
@@ -3575,6 +3690,11 @@ ACom.setMethod(function _initStoredCreature(creature, callback) {
 
 	els.health.textContent = ~~(creature.health / 2.56) + '%';
 	els.health.dataset.sortValue = creature.health;
+
+	if (creature.ac_record) {
+		els.stored.textContent = creature.ac_record.created.format('Y-m-d H:i');
+		els.stored.dataset.sortValue = Number(creature.ac_record.created);
+	}
 });
 
 /**
@@ -4077,5 +4197,6 @@ ACom.addSetting('max_unpaused_eggs', {
 
 ACom.addSetting('keep_powerups_enabled', {
 	title    : 'Keep powerups enabled',
-	type     : 'boolean'
+	type     : 'boolean',
+	hidden   : true
 });
