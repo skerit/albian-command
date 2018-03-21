@@ -781,11 +781,11 @@ ACom.setMethod(function init() {
 				}
 			});
 		}
-	}, 60 * 5 * 1000);
+	}, 5 * 60 * 1000);
 
 	setInterval(function doUpdate() {
 		that.update();
-	}, 5000);
+	}, 5 * 1000);
 
 	// Force enable the powerups in case a manual save was performed
 	// (Saving disables the powerups again)
@@ -943,22 +943,39 @@ ACom.setMethod(function setAcceleration(value, callback) {
  *
  * @author   Jelle De Loecker   <jelle@develry.be>
  * @since    0.1.0
- * @version  0.1.0
+ * @version  0.1.4
  */
 ACom.setMethod(function update(callback) {
 
 	var that = this;
 
+	if (this.hasBeenSeen('updating')) {
+		if (callback) {
+			this.once('updated', function updated() {
+				callback();
+			});
+		}
+
+		return;
+	}
+
 	if (!callback) {
 		callback = Function.thrower;
 	}
 
+	// Emit the 'updating' event and do the update
+	// if nothing hindered it
 	this.emit('updating', function doUpdate() {
 
-		that.getCreatures();
-		that.getEggs();
-
-		that.emit('updated');
+		Fn.parallel(function getCreatures(next) {
+			that.getCreatures(next);
+		}, function getEggs(next) {
+			that.getEggs(next);
+		}, function done(err) {
+			callback(err);
+			that.unsee('updating');
+			that.emit('updated');
+		});
 	});
 });
 
