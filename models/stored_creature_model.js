@@ -88,6 +88,47 @@ StoredCreature.setMethod(function attachCreature(creature, callback) {
 });
 
 /**
+ * Load this record's file
+ *
+ * @author   Jelle De Loecker   <jelle@develry.be>
+ * @since    0.1.4
+ * @version  0.1.4
+ */
+StoredCreature.setMethod(function load(callback) {
+
+	'use strict';
+
+	var that = this;
+
+	if (this.hasBeenSeen('loading_file')) {
+		return this.afterOnce('loaded_file', function done() {
+			callback(null, that.export_instance);
+		});
+	}
+
+	this.emit('loading_file');
+
+	let filepath = libpath.join(acom.paths.local_exports, this.filename + '.exp');
+
+	acom.log('Going to load Stored creature at ' + filepath);
+
+	fs.readFile(filepath, function gotFile(err, buffer) {
+
+		if (err) {
+			acom.log('Failed to load Stored creature: ' + err);
+			return callback(err);
+		}
+
+		let exported = new Creatures.Export(capp);
+		exported.processBuffer(buffer);
+
+		that.export_instance = exported;
+		callback(null, exported);
+		that.emit('loaded_file');
+	});
+});
+
+/**
  * Set methods on the Creature instance
  *
  * @author   Jelle De Loecker   <jelle@develry.be>

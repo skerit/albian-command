@@ -5,6 +5,7 @@
 * Turn "Toggle Powerups" into "Enable Powerups"
 * Add `keep_powerups_enabled` settings, because they seem to revert back to their original state
 * Add action to line up all eggs by the incubator
+* Add action & setting to backup creatures
 
 ## 0.1.3 (2018-03-17)
 

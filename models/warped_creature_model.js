@@ -45,15 +45,23 @@ Warped.RecordClass.setMethod(function load(callback) {
 
 	'use strict';
 
-	if (this._loaded_file) {
-		return callback();
+	var that = this;
+
+	if (this.hasBeenSeen('loading_file')) {
+		return this.afterOnce('loaded_file', function done() {
+			callback(null, that.export_instance);
+		});
 	}
 
-	let that = this;
+	this.emit('loading_file');
 
 	this._loaded_file = true;
 
-	let filepath = libpath.resolve(acom.paths.warp_exports, this.filename);
+	let filepath = libpath.join(acom.paths.warp_exports, this.filename);
+
+	if (!filepath.endsWith('.exp')) {
+		filepath += '.exp';
+	}
 
 	fs.readFile(filepath, function gotFile(err, buffer) {
 
@@ -66,6 +74,7 @@ Warped.RecordClass.setMethod(function load(callback) {
 
 		that.export_instance = exported;
 		callback(null);
+		that.emit('loaded_file');
 	});
 });
 

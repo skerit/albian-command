@@ -115,7 +115,7 @@ ACom.setProperty('creatures_headers', ['picture', 'name', 'age', 'lifestage', 'h
  * @since    0.1.1
  * @version  0.1.4
  */
-ACom.setProperty('stored_creatures_headers', ['picture', 'name', 'stored', 'storage_type', 'age', 'lifestage', 'health', 'status', 'moniker']);
+ACom.setProperty('stored_creatures_headers', ['picture', 'name', 'stored', 'storage_type', 'world_name', 'age', 'lifestage', 'health', 'status', 'moniker']);
 
 /**
  * The table headers of the warped creatures list
@@ -262,7 +262,7 @@ ACom.prepareProperty(function creature_options_row() {
  *
  * @author   Jelle De Loecker   <jelle@develry.be>
  * @since    0.1.0
- * @version  0.1.1
+ * @version  0.1.4
  */
 ACom.prepareProperty(function all_creature_actions_row() {
 
@@ -270,7 +270,8 @@ ACom.prepareProperty(function all_creature_actions_row() {
 	    column = document.createElement('td'),
 	    import_all_from,
 	    export_all_to,
-	    export_all;
+	    export_all,
+	    backup;
 
 	// Indicate this is the actions row
 	row.classList.add('actions-row');
@@ -284,6 +285,9 @@ ACom.prepareProperty(function all_creature_actions_row() {
 
 	import_all_from = this.createActionElement('creatures', 'import_all', 'Import all from...', 'pod_.s16', 1);
 	column.appendChild(import_all_from);
+
+	backup = this.createActionElement('creatures', 'backup_all', 'Backup all', 'wob_.s16', 2);
+	column.appendChild(backup);
 
 	return row;
 });
@@ -794,6 +798,13 @@ ACom.setMethod(function init() {
 			that.capp.enablePowerups();
 		}
 	}, 60 * 1000);
+
+	// Backup creatures every hour
+	setInterval(function backupCreatures() {
+		if (that.getSetting('auto_backup_creatures')) {
+			that.doBackupAllCreaturesAction();
+		}
+	}, 60 * 60 * 1000);
 });
 
 /**
@@ -2634,8 +2645,33 @@ ACom.setMethod(function exportAllTo(dirpath, type, callback) {
 
 		creatures.forEach(function eachCreature(creature, index) {
 			tasks.push(function doExport(next) {
-				that.exportCreatureTo(creature, dirpath, type, function exported(err, result) {
-					next(err, result);
+				that.exportCreatureTo(creature, dirpath, type, function exported(err, filename, record, result) {
+
+					if (!record || type != 'backup') {
+						return next(err, result);
+					}
+
+					that.log('Loading backed up creature record ' + record.moniker + ' ' + record._id);
+
+					// Load the exp file
+					record.load(function loaded(err, exported) {
+
+						if (err) {
+							that.log('Failed to load backup up creature: ' + err);
+							return next(err);
+						}
+
+						that.log('Re-importing backed up creature to position ' + record.x + ', ' + record.y);
+
+						exported.import(true, {x: record.x, y: record.y}, function done(err) {
+
+							if (err) {
+								return next(err);
+							}
+
+							next();
+						});
+					});
 				});
 			});
 		});
@@ -2694,9 +2730,11 @@ ACom.setMethod(function exportCreatureTo(creature, dirpath, type, callback) {
 			return callback(err);
 		}
 
+		let record = null;
+
 		if (type) {
 			// Create a stored creature record
-			let record = that.StoredCreature.createRecord();
+			record = that.StoredCreature.createRecord();
 
 			// Attach this creature & save on next tick
 			record.attachCreature(creature);
@@ -2708,7 +2746,7 @@ ACom.setMethod(function exportCreatureTo(creature, dirpath, type, callback) {
 			record.storage_type = type;
 		}
 
-		callback(null, result, filename);
+		callback(null, filename, record, result);
 	});
 });
 
@@ -2735,6 +2773,32 @@ ACom.setMethod(function doExportAllAction() {
 				return alertError(err, 'Error exporting');
 			}
 
+		});
+	});
+});
+
+/**
+ * Backup all the creatures to the local directory
+ *
+ * @author   Jelle De Loecker   <jelle@develry.be>
+ * @since    0.1.4
+ * @version  0.1.4
+ */
+ACom.setMethod(function doBackupAllCreaturesAction() {
+
+	var that = this;
+
+	this.createDirectory(this.paths.local_exports, function created(err) {
+
+		if (err) {
+			return alertError(err, 'Error creating directory');
+		}
+
+		that.exportAllTo(that.paths.local_exports, 'backup', function exported(err) {
+
+			if (err) {
+				return alertError(err, 'Error backup');
+			}
 		});
 	});
 });
@@ -3738,7 +3802,12 @@ ACom.setMethod(function _initStoredCreature(creature, callback) {
 		els.stored.dataset.sortValue = Number(creature.ac_record.created);
 
 		if (creature.ac_record.storage_type) {
-			els.stored.textContent = creature.ac_record.storage_type;
+			els.storage_type.textContent = creature.ac_record.storage_type;
+		}
+
+		if (creature.ac_record.world_name) {
+			els.world_name.textContent = creature.ac_record.world_name;
+			els.world_name.dataset.sortValue = creature.ac_record.world_name.toLowerCase();
 		}
 	}
 });
@@ -4245,4 +4314,9 @@ ACom.addSetting('keep_powerups_enabled', {
 	title    : 'Keep powerups enabled',
 	type     : 'boolean',
 	hidden   : true
+});
+
+ACom.addSetting('auto_backup_creatures', {
+	title    : 'Automatically backup creatures every hour',
+	type     : 'boolean'
 });

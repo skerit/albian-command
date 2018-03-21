@@ -50,6 +50,18 @@ Model.constitute(function setNames() {
 });
 
 /**
+ * Get the model name
+ *
+ * @author   Jelle De Loecker   <jelle@develry.be>
+ * @since    0.1.4
+ * @version  0.1.4
+ */
+Model.prepareStaticProperty(function model_name() {
+	var name = this.name.before('Model');
+	return name;
+});
+
+/**
  * Get a record class
  *
  * @author   Jelle De Loecker   <jelle@develry.be>
