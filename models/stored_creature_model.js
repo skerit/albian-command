@@ -30,11 +30,21 @@ StoredCreatureModel.constitute(function addFields() {
 	// The moniker of the creature
 	this.addField('moniker');
 
+	// The age at the time of export
+	this.addField('age');
+
 	// The (original) world name
 	this.addField('world_name');
 
 	// The creature id
 	this.addField('creature_id');
+
+	// Storage type
+	this.addField('storage_type');
+
+	// Positions at the time of export
+	this.addField('x');
+	this.addField('y');
 });
 
 let StoredCreature = StoredCreatureModel.RecordClass;
@@ -63,6 +73,15 @@ StoredCreature.setMethod(function attachCreature(creature, callback) {
 
 	if (!this.creature_id && creature.ac_record) {
 		this.creature_id = creature.ac_record._id;
+	}
+
+	if (!this.age) {
+		this.age = creature.age;
+	}
+
+	if (this.x == null) {
+		this.x = creature.x;
+		this.y = creature.y;
 	}
 
 	Blast.nextTick(this.save, this, callback);

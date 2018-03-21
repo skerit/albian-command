@@ -115,7 +115,7 @@ ACom.setProperty('creatures_headers', ['picture', 'name', 'age', 'lifestage', 'h
  * @since    0.1.1
  * @version  0.1.4
  */
-ACom.setProperty('stored_creatures_headers', ['picture', 'name', 'stored', 'age', 'lifestage', 'health', 'status', 'moniker']);
+ACom.setProperty('stored_creatures_headers', ['picture', 'name', 'stored', 'storage_type', 'age', 'lifestage', 'health', 'status', 'moniker']);
 
 /**
  * The table headers of the warped creatures list
@@ -2592,13 +2592,18 @@ ACom.setMethod(function doImportAllAction() {
  *
  * @author   Jelle De Loecker   <jelle@develry.be>
  * @since    0.1.1
- * @version  0.1.1
+ * @version  0.1.4
  */
-ACom.setMethod(function exportAllTo(dirpath, callback) {
+ACom.setMethod(function exportAllTo(dirpath, type, callback) {
 
 	var that = this,
 	    tasks = [],
 	    now = Date.now();
+
+	if (typeof type == 'function') {
+		callback = type;
+		type = null;
+	}
 
 	if (!callback) {
 		callback = Function.thrower;
@@ -2612,7 +2617,7 @@ ACom.setMethod(function exportAllTo(dirpath, callback) {
 
 		creatures.forEach(function eachCreature(creature, index) {
 			tasks.push(function doExport(next) {
-				that.exportCreatureTo(creature, dirpath, function exported(err, result) {
+				that.exportCreatureTo(creature, dirpath, type, function exported(err, result) {
 					next(err, result);
 				});
 			});
@@ -2638,14 +2643,21 @@ ACom.setMethod(function exportAllTo(dirpath, callback) {
  *
  * @param    {Creature}   creature
  * @param    {String}     dirpath
+ * @param    {String}     type
  * @param    {Function}   callback
  */
-ACom.setMethod(function exportCreatureTo(creature, dirpath, callback) {
+ACom.setMethod(function exportCreatureTo(creature, dirpath, type, callback) {
 
 	var that = this,
 	    export_path,
 	    filename;
 
+	if (typeof type == 'function') {
+		callback = type;
+		type = null;
+	}
+
+	// Generate the filename
 	filename = [
 		creature.generation,
 		creature.gender,
@@ -2655,10 +2667,31 @@ ACom.setMethod(function exportCreatureTo(creature, dirpath, callback) {
 		Date.now()
 	].join('_');
 
+	// Construct a path to export to
 	export_path = libpath.resolve(dirpath, filename);
 
+	// Actually export the creature
 	creature.exportTo(export_path, function exported(err, result) {
-		callback(err, result, filename);
+
+		if (err) {
+			return callback(err);
+		}
+
+		if (type) {
+			// Create a stored creature record
+			let record = that.StoredCreature.createRecord();
+
+			// Attach this creature & save on next tick
+			record.attachCreature(creature);
+
+			// Also set the filename
+			record.filename = filename;
+
+			// Set it as a manual export
+			record.storage_type = type;
+		}
+
+		callback(null, result, filename);
 	});
 });
 
@@ -2679,7 +2712,7 @@ ACom.setMethod(function doExportAllAction() {
 			return alertError(err, 'Error creating directory');
 		}
 
-		that.exportAllTo(that.paths.local_exports, function exported(err) {
+		that.exportAllTo(that.paths.local_exports, 'manual', function exported(err) {
 
 			if (err) {
 				return alertError(err, 'Error exporting');
@@ -2706,20 +2739,12 @@ ACom.setMethod(function doExportCreatureAction(element, creature) {
 			return alertError(err, 'Error creating directory');
 		}
 
-		that.exportCreatureTo(creature, that.paths.local_exports, function exported(err, result, filename) {
+		that.exportCreatureTo(creature, that.paths.local_exports, 'manual', function exported(err, result, filename) {
 
 			if (err) {
 				return alertError(err, 'Error exporting');
 			}
 
-			// Create a stored creature record
-			let record = that.StoredCreature.createRecord();
-
-			// Attach this creature & save on next tick
-			record.attachCreature(creature);
-
-			// Also set the filename
-			record.filename = filename;
 		});
 	});
 });
@@ -3694,6 +3719,10 @@ ACom.setMethod(function _initStoredCreature(creature, callback) {
 	if (creature.ac_record) {
 		els.stored.textContent = creature.ac_record.created.format('Y-m-d H:i');
 		els.stored.dataset.sortValue = Number(creature.ac_record.created);
+
+		if (creature.ac_record.storage_type) {
+			els.stored.textContent = creature.ac_record.storage_type;
+		}
 	}
 });
 
