@@ -496,11 +496,12 @@ ACom.setProperty(function speed() {
  *
  * @author   Jelle De Loecker   <jelle@develry.be>
  * @since    0.1.3
- * @version  0.1.3
+ * @version  0.1.4
  */
 ACom.setMethod(function log(type, message) {
 
-	var hist;
+	var hist,
+	    now = Date.now();
 
 	if (arguments.length == 1) {
 		message = type;
@@ -520,7 +521,7 @@ ACom.setMethod(function log(type, message) {
 		hist.count++;
 
 		if (hist.count > 20) {
-			if (hist.count % 100 == 0) {
+			if (hist.count % 20 == 0) {
 				message += ' (repeat nr ' + hist.count + ')';
 			} else {
 				return;
@@ -539,7 +540,15 @@ ACom.setMethod(function log(type, message) {
 
 	// Don't print too many duplicate lines
 	if (type == 'default' && this.log_lines.indexOf(message) > -1) {
-		return;
+		if ((now - this.last_default_line_time) > 5000) {
+			// 5 seconds passed, allow it
+		} else {
+			return;
+		}
+	}
+
+	if (type == 'default') {
+		this.last_default_line_time = now;
 	}
 
 	this.log_lines.push(message);
@@ -683,7 +692,7 @@ ACom.setMethod(function init() {
 			}
 		}
 
-		that.log('An error dialogbox appeared in C2:', message);
+		that.log('An error dialogbox appeared in C2: ' + message);
 
 		if (!that.getSetting('close_dialog_boxes')) {
 			alert('A dialog box has appeared, please close it manually');
@@ -695,11 +704,14 @@ ACom.setMethod(function init() {
 		callback({type: 'close'});
 	});
 
+	let seen_peers = {};
+
 	// Listen for peers
 	this.babel.on('peer', function gotPeer(peer) {
 
-		if (peer.ip) {
-			that.log('Found new peer: ' + peer.ip);
+		if (peer.ip && !seen_peers[peer.ip]) {
+			seen_peers[peer.ip] = true;
+			that.log('peer', 'Found new peer: ' + peer.ip);
 		}
 
 		peer.onTalk('warp_creature', function receivedWarp(data, callback) {
@@ -974,31 +986,44 @@ ACom.setMethod(function setAcceleration(value, callback) {
  */
 ACom.setMethod(function update(callback) {
 
-	var that = this;
-
-	if (this.hasBeenSeen('updating')) {
-		if (callback) {
-			this.once('updated', function updated() {
-				callback();
-			});
-		}
-
-		return;
-	}
+	var that = this,
+	    bomb;
 
 	if (!callback) {
 		callback = Function.thrower;
+	}
+
+	callback = Function.regulate(callback);
+
+	bomb = Function.timebomb(10000, function onTimeout(err) {
+		that.log('Update timeout! ' + err);
+		callback(err);
+	});
+
+	if (this.hasBeenSeen('updating')) {
+		this.once('updated', function updated() {
+			bomb.defuse();
+			callback();
+		});
+
+		return;
 	}
 
 	// Emit the 'updating' event and do the update
 	// if nothing hindered it
 	this.emit('updating', function doUpdate() {
 
+		console.log('updating....');
+
+		that.log('updating', 'Updating creatures...');
+
 		Fn.parallel(function getCreatures(next) {
 			that.getCreatures(next);
 		}, function getEggs(next) {
 			that.getEggs(next);
 		}, function done(err) {
+			bomb.defuse();
+			that.log('Updated creatures!');
 			callback(err);
 			that.unsee('updating');
 			that.emit('updated');
@@ -3670,6 +3695,8 @@ ACom.setMethod(function nameCreature(creature, callback) {
 		return callback();
 	}
 
+	that.log('name_creature', 'Naming creature ' + creature.moniker + '...');
+
 	creature.getGeneration(function gotGeneration(err, generation) {
 
 		var letter,
@@ -3679,6 +3706,7 @@ ACom.setMethod(function nameCreature(creature, callback) {
 		    i;
 
 		if (err) {
+			that.log('name_creature', 'Unable to name creature, failure getting generation: ' + err);
 			return callback(err);
 		}
 
@@ -3687,6 +3715,8 @@ ACom.setMethod(function nameCreature(creature, callback) {
 
 		// Get the letter
 		letter = String.fromCharCode(65 + index);
+
+		that.log('name_creature', 'Should name creature ' + creature.moniker + ' with starting letter ' + letter);
 
 		// Get the names
 		names = that.all_names[letter];
@@ -3709,18 +3739,21 @@ ACom.setMethod(function nameCreature(creature, callback) {
 
 			name.monikers.push(creature.moniker);
 
+			that.log('name_creature', 'Going to set ' + name.name + ' on creature ' + creature.moniker);
+
 			creature.setName(name.name, function done(err) {
 
 				if (err) {
-					console.error('Error setting name:', name.name, 'on', creature);
+					that.log('name_creature', 'Error setting name: ' + name.name + ' on ' + creature.moniker);
+					return callback(err);
 				}
 
-				callback();
+				callback(null, name.name);
 			});
 		} else {
-			console.warn('Found no name for', creature.moniker);
+			that.log('name_creature', 'Unable to name ' + creature.moniker + ': Found no name!');
+			callback(null, false);
 		}
-
 	});
 });
 

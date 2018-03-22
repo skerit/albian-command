@@ -39,7 +39,7 @@ Warped.constitute(function addFields() {
  *
  * @author   Jelle De Loecker   <jelle@develry.be>
  * @since    0.1.1
- * @version  0.1.1
+ * @version  0.1.4
  */
 Warped.RecordClass.setMethod(function load(callback) {
 
@@ -63,7 +63,7 @@ Warped.RecordClass.setMethod(function load(callback) {
 		filepath += '.exp';
 	}
 
-	fs.readFile(filepath, function gotFile(err, buffer) {
+	this.readFile(filepath, function gotFile(err, buffer) {
 
 		if (err) {
 			return callback(err);

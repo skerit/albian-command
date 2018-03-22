@@ -112,7 +112,7 @@ StoredCreature.setMethod(function load(callback) {
 
 	acom.log('Going to load Stored creature at ' + filepath);
 
-	fs.readFile(filepath, function gotFile(err, buffer) {
+	this.readFile(filepath, function gotFile(err, buffer) {
 
 		if (err) {
 			acom.log('Failed to load Stored creature: ' + err);
