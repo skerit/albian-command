@@ -14,7 +14,7 @@ var Warped = Function.inherits('Develry.Creatures.Model', function WarpedCreatur
  *
  * @author   Jelle De Loecker   <jelle@develry.be>
  * @since    0.1.1
- * @version  0.1.1
+ * @version  0.1.4
  */
 Warped.constitute(function addFields() {
 
@@ -32,6 +32,9 @@ Warped.constitute(function addFields() {
 
 	// The message the sender added
 	this.addField('message');
+
+	// Remember crashes during imports
+	this.addField('crashes');
 });
 
 /**
@@ -52,6 +55,16 @@ Warped.RecordClass.setMethod(function load(callback) {
 			callback(null, that.export_instance);
 		});
 	}
+
+	// Listen for import errors
+	this.on('import_error', function onError(err) {
+		if (!that.crashes) {
+			that.crashes = 0;
+		}
+
+		that.crashes++;
+		that.save();
+	});
 
 	this.emit('loading_file');
 

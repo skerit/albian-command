@@ -42,6 +42,9 @@ StoredCreatureModel.constitute(function addFields() {
 	// Storage type
 	this.addField('storage_type');
 
+	// Remember crashes during imports
+	this.addField('crashes');
+
 	// Positions at the time of export
 	this.addField('x');
 	this.addField('y');
@@ -105,6 +108,16 @@ StoredCreature.setMethod(function load(callback) {
 			callback(null, that.export_instance);
 		});
 	}
+
+	// Listen for import errors
+	this.on('import_error', function onError(err) {
+		if (!that.crashes) {
+			that.crashes = 0;
+		}
+
+		that.crashes++;
+		that.save();
+	});
 
 	this.emit('loading_file');
 

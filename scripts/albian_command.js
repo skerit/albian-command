@@ -704,6 +704,11 @@ ACom.setMethod(function init() {
 		callback({type: 'close'});
 	});
 
+	// Listen for crashes
+	this.capp.on('error_crashdialog', function gotCrashDialog(data, callback, last_error) {
+		console.log('Got crash dialog:', data, that.capp.ole.last_sent_main, callback);
+	});
+
 	let seen_peers = {};
 
 	// Listen for peers
@@ -1000,14 +1005,24 @@ ACom.setMethod(function update(callback) {
 		callback(err);
 	});
 
-	if (this.hasBeenSeen('updating')) {
-		this.once('updated', function updated() {
-			bomb.defuse();
-			callback();
-		});
-
-		return;
+	if (!this.last_update_time) {
+		this.last_update_time = Date.now();
 	}
+
+	if (this.hasBeenSeen('updating')) {
+		if ((Date.now() - this.last_update_time) > 15 * 1000) {
+			that.log('warn', 'Update seems stuck, forcing a new update');
+		} else {
+			this.once('updated', function updated() {
+				bomb.defuse();
+				callback();
+			});
+
+			return;
+		}
+	}
+
+	this.last_update_time = Date.now();
 
 	// Emit the 'updating' event and do the update
 	// if nothing hindered it
@@ -3549,7 +3564,7 @@ ACom.setAfterMethod('ready', function getCreatures(callback) {
 
 					// Re-set the creature's name
 					if (remember_names && creature.has_name) {
-						that.log('Making creature ' + creature.name + 'remember its name');
+						that.log('Making creature "' + creature.name + '" remember its name');
 						creature.setName(creature.name);
 					}
 
@@ -4137,7 +4152,7 @@ ACom.setMethod(function _initCreature(creature, callback) {
 			status += 'Asleep';
 		}
 
-		els.status.textContent = status;
+		els.status.innerHTML = status;
 
 		if (creature.has_name) {
 			name_doc = that.getName(creature.name);
