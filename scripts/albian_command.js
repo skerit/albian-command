@@ -706,7 +706,16 @@ ACom.setMethod(function init() {
 
 	// Listen for crashes
 	this.capp.on('error_crashdialog', function gotCrashDialog(data, callback, last_error) {
-		console.log('Got crash dialog:', data, that.capp.ole.last_sent_main, callback);
+
+		if (!that.getSetting('close_dialog_boxes')) {
+			alert('Creatures 2 seems to have crashed');
+			callback();
+			return;
+		}
+
+		//console.log('Got crash dialog:', data, that.capp.ole.last_sent_main, callback);
+		that.log('error', 'Going to close error dialog');
+		callback({type: 'close'});
 	});
 
 	let seen_peers = {};
@@ -819,10 +828,6 @@ ACom.setMethod(function init() {
 			});
 		}
 	}, 5 * 60 * 1000);
-
-	setInterval(function doUpdate() {
-		that.update();
-	}, 5 * 1000);
 
 	// Force enable the powerups in case a manual save was performed
 	// (Saving disables the powerups again)
@@ -967,6 +972,10 @@ ACom.setCacheMethod(function doAsyncInit() {
 			throw err;
 		}
 
+		setInterval(function doUpdate() {
+			that.update();
+		}, 5 * 1000);
+
 		that.emit('ready');
 	});
 });
@@ -1002,7 +1011,7 @@ ACom.setMethod(function update(callback) {
 
 	bomb = Function.timebomb(10000, function onTimeout(err) {
 		that.log('Update timeout! ' + err);
-		callback(err);
+		callback(new Error('Creatures update timeout after 10 seconds'));
 	});
 
 	if (!this.last_update_time) {
@@ -2700,6 +2709,12 @@ ACom.setMethod(function exportAllTo(dirpath, type, callback) {
 		}
 
 		creatures.forEach(function eachCreature(creature, index) {
+
+			// Don't export pregnant creatures
+			if (creature.pregnant) {
+				return;
+			}
+
 			tasks.push(function doExport(next) {
 				that.exportCreatureTo(creature, dirpath, type, function exported(err, filename, record, result) {
 
@@ -4132,7 +4147,14 @@ ACom.setMethod(function _initCreature(creature, callback) {
 			els.tbody.removeAttribute('data-pregnant');
 		}
 
+		if (creature.dead) {
+			status += 'Dead';
+		}
+
 		if (creature.unconscious) {
+			if (status) {
+				status += '<br>';
+			}
 			status += 'Unconscious';
 		}
 
