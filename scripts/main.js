@@ -1,5 +1,6 @@
 var $list_body  = $('.creatures-tbody'),
     $sidelinks  = $('.sidebar a'),
+    cc_queue    = Function.createQueue({enabled: true, limit: 2});
     $tabs       = $('.tabpage'),
     Fn          = Blast.Bound.Function;
 
@@ -45,19 +46,25 @@ function createCreatureCanvas(creature) {
 
 	var s16image = document.createElement('s16-image');
 
-	// And get the head s16 file
-	creature.getBodyPartImage('head', function gotHead(err, s16) {
+	cc_queue.add(function getBodyPart(done) {
 
-		if (err) {
-			throw err;
-		}
+		// And get the head s16 file
+		creature.getBodyPartImage('head', function gotHead(err, s16) {
 
-		if (!s16) {
-			console.warn('Could not found head for creature', creature.moniker);
-			return;
-		}
+			if (err) {
+				done();
+				throw err;
+			}
 
-		s16image.image = s16.images[28];
+			if (!s16) {
+				done();
+				console.warn('Could not found head for creature', creature.moniker);
+				return;
+			}
+
+			s16image.image = s16.images[28];
+			done();
+		});
 	});
 
 	return s16image;
