@@ -28,6 +28,7 @@ window.addEventListener('error', function onError(event) {
 	if (is_dev_mode) {
 		return console.error('Uncaught error:', event.error);
 	}
+
 	debug('Uncaught Error in: "' + event.filename + ' @ ' + event.lineno, event.message);
 });
 
@@ -208,9 +209,9 @@ function debug(message) {
 		result += entry + '\n';
 	}
 
-	acom.log(result);
+	acom.log('debug', result);
 
-	alert(result);
+	//alert(result);
 }
 
 /**
@@ -235,7 +236,7 @@ function alertError(err, prefix) {
 		result += err;
 	}
 
-	acom.log(result);
+	acom.log('error', result);
 
 	console.error('Show error:', err, result);
 	alert(result);
