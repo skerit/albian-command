@@ -131,9 +131,9 @@ ACom.setProperty('warped_creatures_headers', ['picture', 'name', 'received', 'se
  *
  * @author   Jelle De Loecker   <jelle@develry.be>
  * @since    0.1.1
- * @version  0.1.1
+ * @version  0.1.4
  */
-ACom.setProperty('eggs_headers', ['picture', 'moniker', 'gender', 'stage', 'progress', 'status']);
+ACom.setProperty('eggs_headers', ['picture', 'moniker', 'mother', 'father', 'gender', 'stage', 'progress', 'status']);
 
 /**
  * The table headers of the peers list
@@ -3624,7 +3624,8 @@ ACom.setAfterMethod('ready', function getEggs(callback) {
 	// Get the actual creatures
 	capp.getEggs(function gotCreatures(err, eggs) {
 
-		var tasks = [];
+		var tasks = [],
+		    norn_limit = 0;
 
 		if (err) {
 			return callback(err);
@@ -3633,6 +3634,17 @@ ACom.setAfterMethod('ready', function getEggs(callback) {
 		eggs.forEach(function eachEgg(egg) {
 			tasks.push(function doEgg(next) {
 				that._initEgg(egg, next);
+			});
+		});
+
+		tasks.push(function getLimit(next) {
+			capp.getHatcheryLimit(function gotLimit(err, limit) {
+				if (err) {
+					return next(err);
+				}
+
+				norn_limit = limit;
+				next();
 			});
 		});
 
@@ -3658,7 +3670,17 @@ ACom.setAfterMethod('ready', function getEggs(callback) {
 			let max_unpaused = Number(that.getSetting('max_unpaused_eggs')),
 			    do_unpause = that.getSetting('unpause_eggs');
 
-			if (do_unpause && paused_count) {
+			if (norn_limit >= Object.size(capp.creatures) && eggs.length) {
+				that.log('Going to pause all eggs because there are too many norns');
+
+				eggs.forEach(function eachEgg(egg) {
+					if (egg.paused) {
+						return;
+					}
+
+					egg.pause();
+				});
+			} else if (do_unpause && paused_count) {
 				eggs.forEach(function eachEgg(egg) {
 
 					if (max_unpaused && unpaused_count >= max_unpaused) {
@@ -4327,6 +4349,14 @@ ACom.setMethod(function _initEgg(egg, callback) {
 
 		els.progress.textContent = egg.tick_progress;
 		els.progress.dataset.sortValue = egg.tick_progress;
+
+		if (egg.mother) {
+			els.mother.textContent = egg.mother.name;
+		}
+
+		if (egg.father) {
+			els.father.textContent = egg.father.name;
+		}
 
 		egg_img.image_index = egg.stage;
 
