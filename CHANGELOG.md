@@ -2,6 +2,8 @@
 
 * Don't pause eggs when there are 0 creatures
 * Upgrade `creatures` to v0.2.5
+* Don't use `alert` for uncaught errors, just log them
+* Add log type to log window
 
 ## 0.1.4 (2018-03-26)
 

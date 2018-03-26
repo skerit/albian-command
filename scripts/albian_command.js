@@ -561,7 +561,7 @@ ACom.setMethod(function log(type, message) {
 		this.log_el.value += '\n';
 	}
 
-	message = '[' + Date.create().format('Y-m-d H:i:s') + '] ' + message;
+	message = '[' + Date.create().format('Y-m-d H:i:s') + '] [' + type.toUpperCase() + '] ' + message;
 
 	this.log_el.value += message;
 });
