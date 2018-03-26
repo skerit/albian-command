@@ -1,6 +1,7 @@
-## 0.1.5 (WIP)
+## 0.1.5 (2018-03-26)
 
 * Don't pause eggs when there are 0 creatures
+* Upgrade `creatures` to v0.2.5
 
 ## 0.1.4 (2018-03-26)
 
@@ -10,7 +11,7 @@
 * Add `keep_powerups_enabled` settings, because they revert back to their original state after a manual save
 * Add action to line up all eggs by the incubator
 * Add action & setting for backing up creatures
-* Many fixes from the `creatures` library
+* Upgrade `creatures` to v0.2.4
 
 ## 0.1.3 (2018-03-17)
 
