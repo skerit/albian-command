@@ -1,3 +1,7 @@
+## 0.1.5 (WIP)
+
+* Don't pause eggs when there are 0 creatures
+
 ## 0.1.4 (2018-03-26)
 
 * Add autosave feature for `blueberry4$` users

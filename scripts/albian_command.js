@@ -3666,10 +3666,11 @@ ACom.setAfterMethod('ready', function getEggs(callback) {
 			that.log('eggs', 'There are currently ' + eggs.length + ' eggs in the world: ' + paused_count + ' are paused, ' + unpaused_count + ' are unpaused');
 
 			let max_unpaused = Number(that.getSetting('max_unpaused_eggs')),
-			    do_unpause = that.getSetting('unpause_eggs');
+			    do_unpause = that.getSetting('unpause_eggs'),
+			    creature_count = Object.size(capp.creatures);
 
-			if (norn_limit >= Object.size(capp.creatures) && eggs.length) {
-				that.log('Going to pause all eggs because there are too many norns');
+			if (creature_count && norn_limit && creature_count >= norn_limit && eggs.length) {
+				that.log('Going to pause all eggs because there are too many norns: ' + creature_count + ' creatures > ' + norn_limit);
 
 				eggs.forEach(function eachEgg(egg) {
 					if (egg.paused) {
