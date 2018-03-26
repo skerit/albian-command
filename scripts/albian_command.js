@@ -1037,8 +1037,6 @@ ACom.setMethod(function update(callback) {
 	// if nothing hindered it
 	this.emit('updating', function doUpdate() {
 
-		console.log('updating....');
-
 		that.log('updating', 'Updating creatures...');
 
 		Fn.parallel(function getCreatures(next) {
