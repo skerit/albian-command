@@ -3092,6 +3092,41 @@ ACom.setAfterMethod('ready', function loadCaosTab(element) {
 });
 
 /**
+ * Load the scriptorium tab
+ *
+ * @author   Jelle De Loecker   <jelle@develry.be>
+ * @since    0.1.6
+ * @version  0.1.6
+ */
+ACom.setAfterMethod('ready', function loadScriptoriumTab(element) {
+
+	'use strict';
+
+	var that = this;
+
+	if (this._loaded_scriptorium_tab) {
+		return;
+	}
+
+	this._loaded_scriptorium_tab = true;
+	element.innerHTML = '<div class="scriptorium-families"></div>';
+
+	let $families = $('.scriptorium-families');
+
+	this.capp.classification_system.forEach(function eachFamily(family, index) {
+
+		var $table,
+		    $tbody,
+		    html;
+
+		html = `<div class="scriptorium-family" data-family-id="${index}">
+			<span class="family-name">${family.name}</span>
+		</div>`
+
+	});
+});
+
+/**
  * Load the logging tab
  *
  * @author   Jelle De Loecker   <jelle@develry.be>
