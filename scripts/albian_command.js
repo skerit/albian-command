@@ -3807,17 +3807,26 @@ ACom.setMethod(function nameCreature(creature, callback) {
 		// Get the letter
 		letter = String.fromCharCode(65 + index);
 
-		that.log('name_creature', 'Should name creature ' + creature.moniker + ' with starting letter ' + letter);
+		that.log('name_creature', 'Should name creature ' + creature.moniker + ' (' + creature.gender + ') with starting letter ' + letter);
 
 		// Get the names
 		names = that.all_names[letter];
+
+		// Sort by ascending use_count
+		names.sortByPath(1, 'use_count', 1, 'name');
 
 		// Iterate over all the names
 		for (i = 0; i < names.length; i++) {
 			name = names[i];
 
-			if (!name.use_count && name[creature.gender]) {
-				break;
+			if (name[creature.gender]) {
+				// Use this name if it hasn't been used before,
+				// or if reusing names is allowed
+				if (!name.use_count || that.getSetting('reuse_names')) {
+					break;
+				} else {
+					name = null;
+				}
 			} else {
 				name = null;
 			}
@@ -3842,7 +3851,7 @@ ACom.setMethod(function nameCreature(creature, callback) {
 				callback(null, name.name);
 			});
 		} else {
-			that.log('name_creature', 'Unable to name ' + creature.moniker + ': Found no name!');
+			that.log('name_creature', 'Unable to name ' + creature.moniker + ' of generation ' + creature.generation + ': Found no name!');
 			callback(null, false);
 		}
 	});
@@ -4405,6 +4414,12 @@ ACom.setMethod(function _initEgg(egg, callback) {
 
 ACom.addSetting('name_creatures', {
 	title   : 'Automatically name new creatures',
+	type    : 'boolean',
+	default : true
+});
+
+ACom.addSetting('reuse_names', {
+	title   : 'Reuse names',
 	type    : 'boolean',
 	default : true
 });
