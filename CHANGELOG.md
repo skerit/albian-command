@@ -1,3 +1,7 @@
+## 0.1.6 (WIP)
+
+* Remove "chrome-extension:/" bit from error logs
+
 ## 0.1.5 (2018-03-26)
 
 * Don't pause eggs when there are 0 creatures

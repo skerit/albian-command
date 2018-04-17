@@ -236,7 +236,7 @@ function alertError(err, prefix) {
 		result += err;
 	}
 
-	acom.log('error', result);
+	result = acom.log('error', result);
 
 	console.error('Show error:', err, result);
 	alert(result);

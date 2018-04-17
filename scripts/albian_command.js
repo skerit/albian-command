@@ -496,7 +496,7 @@ ACom.setProperty(function speed() {
  *
  * @author   Jelle De Loecker   <jelle@develry.be>
  * @since    0.1.3
- * @version  0.1.4
+ * @version  0.1.6
  */
 ACom.setMethod(function log(type, message) {
 
@@ -517,6 +517,9 @@ ACom.setMethod(function log(type, message) {
 
 	hist = this.log_history[type];
 
+	// Remove "chrome-extension" bit
+	message = message.replace(/chrome-extension:\/\/.+?\//g, '/');
+
 	if (hist.value == message) {
 		hist.count++;
 
@@ -524,13 +527,13 @@ ACom.setMethod(function log(type, message) {
 			if (hist.count % 20 == 0) {
 				message += ' (repeat nr ' + hist.count + ')';
 			} else {
-				return;
+				return message;
 			}
 		} else if (hist.count > 3) {
 			if (hist.count % 10 == 0) {
 				message += ' (repeat nr ' + hist.count + ')';
 			} else {
-				return;
+				return message;
 			}
 		}
 	} else {
@@ -543,7 +546,7 @@ ACom.setMethod(function log(type, message) {
 		if ((now - this.last_default_line_time) > 5000) {
 			// 5 seconds passed, allow it
 		} else {
-			return;
+			return message;
 		}
 	}
 
@@ -564,6 +567,8 @@ ACom.setMethod(function log(type, message) {
 	message = '[' + Date.create().format('Y-m-d H:i:s') + '] [' + type.toUpperCase() + '] ' + message;
 
 	this.log_el.value += message;
+
+	return message;
 });
 
 /**
