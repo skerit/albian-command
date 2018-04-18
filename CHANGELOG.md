@@ -2,6 +2,7 @@
 
 * Remove "chrome-extension:/" bit from error logs
 * Add `reuse_names` setting, which will reuse names once they all have been used once
+* Turn game speed scrollbar into an numeric input
 
 ## 0.1.5 (2018-03-26)
 

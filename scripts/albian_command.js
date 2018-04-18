@@ -5,7 +5,7 @@ var nwgui = require('nw.gui');
  *
  * @author   Jelle De Loecker   <jelle@develry.be>
  * @since    0.1.0
- * @version  0.1.4
+ * @version  0.1.6
  */
 var ACom = Function.inherits('Develry.Creatures.Base', function AlbianCommand() {
 
@@ -30,10 +30,7 @@ var ACom = Function.inherits('Develry.Creatures.Base', function AlbianCommand() 
 	// Link to all the tab pages
 	this.$tabs       = $('.tabpage');
 
-	// Link to the speedvalue span
-	this.$speed_val  = $('.speed-value');
-
-	// Link to the speed range slider
+	// Link to the speed input
 	this.$speed      = $('.speed');
 
 	// The #warped anchor
@@ -476,19 +473,38 @@ ACom.setProperty(function speed() {
 	return this._speed / 2;
 }, function setSpeed(value) {
 
-	var send_value = value * 2,
+	var send_value,
 	    was_set = this._speed != null;
 
-	// Remember the speed
-	this._speed = value;
+	send_value = this.normalizeSpeed(value);
 
-	// Set it in the span
-	this.$speed_val.text(value + 'x');
+	if (this.$speed.val() != value) {
+		this.$speed.val(value);
+	}
 
 	// And change the game speed (but not on the initial value)
 	if (was_set) {
 		this.setAcceleration(send_value);
 	}
+});
+
+/**
+ * Calculate speed
+ *
+ * @author   Jelle De Loecker   <jelle@develry.be>
+ * @since    0.1.6
+ * @version  0.1.6
+ *
+ * @param    {Number}   value
+ */
+ACom.setMethod(function normalizeSpeed(value) {
+
+	var send_value = value * 2;
+
+	// Remember the speed
+	this._speed = value;
+
+	return send_value;
 });
 
 /**
@@ -576,7 +592,7 @@ ACom.setMethod(function log(type, message) {
  *
  * @author   Jelle De Loecker   <jelle@develry.be>
  * @since    0.1.0
- * @version  0.1.4
+ * @version  0.1.6
  */
 ACom.setMethod(function init() {
 
@@ -609,10 +625,45 @@ ACom.setMethod(function init() {
 	this.getEggs();
 
 	// Listen to speed range changes
-	this.$speed.on('input', Function.throttle(function onChange(e) {
-		var new_value = this.value / 10;
+	this.$speed.on('change', function onChange(e) {
+		console.log('Got speed:', this.value);
+		var new_value = this.value;
 		that.speed = new_value;
-	}, 400));
+	});
+
+	// Listen for scroll event on speed input
+	this.$speed.on('wheel', function onWheel(e) {
+
+		var value;
+
+		// Give input focus so the value can change
+		if (document.activeElement != this) {
+			this.focus();
+		}
+
+		value = Number(this.value);
+
+		// The actual value of the input will not change until after the wheel event,
+		// and then the change event won't necesarily fire immediately,
+		// so calculate the value now and call setAcceleration manually
+		if (e.originalEvent.deltaY > 0) {
+			value -= 0.1;
+		} else {
+			value += 0.1;
+		}
+
+		if (value < 0) {
+			value = 0;
+		}
+
+		if (value > 10) {
+			value = 10;
+		}
+
+		value = that.normalizeSpeed(value);
+
+		that.setAcceleration(value);
+	});
 
 	this.$sidelinks.on('click', function onClick(e) {
 
@@ -993,6 +1044,8 @@ ACom.setCacheMethod(function doAsyncInit() {
  * @version  0.1.0
  */
 ACom.setMethod(function setAcceleration(value, callback) {
+	this.log('Speed value ' + (value/2) + ' will be sent to C2');
+
 	this.capp.setSpeed(value, callback);
 });
 

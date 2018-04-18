@@ -5,7 +5,7 @@
 	"main"          : "index.html",
 	"window": {
 		"width"     : 1060,
-		"height"    : 600,
+		"height"    : 650,
 		"toolbar"   : false,
 		"position"  : "center",
 		"resizable" : true
