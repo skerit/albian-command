@@ -516,7 +516,10 @@ ACom.setMethod(function normalizeSpeed(value) {
  */
 ACom.setMethod(function log(type, message) {
 
-	var hist,
+	var previous_scroll_top,
+	    previous_scroll_height,
+	    do_scroll,
+	    hist,
 	    now = Date.now();
 
 	if (arguments.length == 1) {
@@ -576,6 +579,10 @@ ACom.setMethod(function log(type, message) {
 		this.log_lines.shift();
 	}
 
+	// Get the previous scroll height
+	previous_scroll_top = this.log_el.scrollTop;
+	previous_scroll_height = this.log_el.scrollHeight;
+
 	if (this.log_el.value) {
 		this.log_el.value += '\n';
 	}
@@ -583,6 +590,23 @@ ACom.setMethod(function log(type, message) {
 	message = '[' + Date.create().format('Y-m-d H:i:s') + '] [' + type.toUpperCase() + '] ' + message;
 
 	this.log_el.value += message;
+
+	// Autoscroll the textarea, but only if it's scrolled to the bottom
+	if (this.log_el.scrollHeight > this.log_el.clientHeight) {
+		if (previous_scroll_height < this.log_el.scrollHeight) {
+			if (previous_scroll_height <= this.log_el.clientHeight) {
+				// The height did previously not cause a scrollbar, so scrolldown now
+				do_scroll = true;
+			} else if (previous_scroll_height == (this.log_el.scrollTop + this.log_el.clientHeight)) {
+				do_scroll = true;
+			}
+		}
+
+		if (do_scroll) {
+			// Scroll the textarea to the bottom
+			this.log_el.scrollTop = this.log_el.scrollHeight - this.log_el.clientHeight;
+		}
+	}
 
 	return message;
 });
