@@ -4,6 +4,7 @@
 * Add `reuse_names` setting, which will reuse names once they all have been used once
 * Turn game speed scrollbar into an numeric input
 * Autoscroll the log output
+* Get previously set speed of the creatures application
 
 ## 0.1.5 (2018-03-26)
 

@@ -645,6 +645,26 @@ ACom.setMethod(function init() {
 	// Load in the creatures
 	this.getCreatures();
 
+	// Get the speed
+	this.capp.getSpeed(function gotSpeed(err, result) {
+
+		var speed;
+
+		if (err) {
+			return that.log('Error getting initial speed: ' + err);
+		}
+
+		if (result.speed > -1) {
+			speed = result.speed / 2;
+
+			// Get rid of rounding issues (2.90000001 stuff, for example)
+			speed = (~~((speed)*10))/10;
+
+			that._speed = speed;
+			that.$speed.val(that._speed);
+		}
+	});
+
 	// Load in the eggs
 	this.getEggs();
 
