@@ -3804,7 +3804,7 @@ ACom.setAfterMethod('ready', function getEggs(callback) {
 
 			let max_unpaused = Number(that.getSetting('max_unpaused_eggs')),
 			    do_unpause = that.getSetting('unpause_eggs'),
-			    creature_count = Object.size(capp.creatures);
+			    creature_count = capp.creature_count;
 
 			if (creature_count && norn_limit && creature_count >= norn_limit && eggs.length) {
 				that.log('Going to pause all eggs because there are too many norns: ' + creature_count + ' creatures > ' + norn_limit);
@@ -3869,7 +3869,7 @@ ACom.setMethod(function teachLanguage(creature, callback) {
  *
  * @author   Jelle De Loecker   <jelle@develry.be>
  * @since    0.1.0
- * @version  0.1.0
+ * @version  0.1.6
  */
 ACom.setMethod(function nameCreature(creature, callback) {
 
@@ -3941,7 +3941,7 @@ ACom.setMethod(function nameCreature(creature, callback) {
 			creature.setName(name.name, function done(err) {
 
 				if (err) {
-					that.log('name_creature', 'Error setting name: ' + name.name + ' on ' + creature.moniker);
+					that.log('name_creature', 'Error setting name: ' + name.name + ' on ' + creature.moniker + ':', err);
 					return callback(err);
 				}
 
