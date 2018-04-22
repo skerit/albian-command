@@ -1,4 +1,4 @@
-## 0.1.6 (WIP)
+## 0.1.6 (2018-04-22)
 
 * Remove "chrome-extension:/" bit from error logs
 * Add `reuse_names` setting, which will reuse names once they all have been used once
