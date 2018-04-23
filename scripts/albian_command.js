@@ -75,6 +75,9 @@ var ACom = Function.inherits('Develry.Creatures.Base', function AlbianCommand() 
 	this.all_names = {};
 	this.lower_names = [];
 
+	// The naming queue (we only name 1 creature at a time)
+	this.name_queue = Function.createQueue({limit: 1, enabled: true});
+
 	this.init();
 
 	console.log('Created AlbianCommand instance:', this);
@@ -606,6 +609,10 @@ ACom.setMethod(function log(type, message) {
 			// Scroll the textarea to the bottom
 			this.log_el.scrollTop = this.log_el.scrollHeight - this.log_el.clientHeight;
 		}
+	}
+
+	if (is_dev_mode) {
+		console.log('[DEVMODE]', message);
 	}
 
 	return message;
@@ -3869,7 +3876,7 @@ ACom.setMethod(function teachLanguage(creature, callback) {
  *
  * @author   Jelle De Loecker   <jelle@develry.be>
  * @since    0.1.0
- * @version  0.1.6
+ * @version  0.1.7
  */
 ACom.setMethod(function nameCreature(creature, callback) {
 
@@ -3880,77 +3887,98 @@ ACom.setMethod(function nameCreature(creature, callback) {
 	}
 
 	if (creature.has_name) {
-		return callback();
+		return Blast.nextTick(callback);
 	}
 
-	that.log('name_creature', 'Naming creature ' + creature.moniker + '...');
+	if (creature.hasBeenSeen('naming_creature')) {
+		return Blast.nextTick(callback);
+	}
 
-	creature.getGeneration(function gotGeneration(err, generation) {
+	creature.emit('naming_creature');
 
-		var letter,
-		    index,
-		    names,
-		    name,
-		    i;
+	this.name_queue.add(function doNameCreature(next) {
 
-		if (err) {
-			that.log('name_creature', 'Unable to name creature, failure getting generation: ' + err);
-			return callback(err);
+		that.log('name_creature', 'Going to name creature ' + creature.moniker + '...');
+
+		function done(err, name) {
+			next();
+
+			if (err) {
+				callback(err);
+			} else {
+				callback(null, name);
+			}
+
+			creature.unsee('naming_creature');
 		}
 
-		// Get the letter index
-		index = generation % 26;
+		creature.getGeneration(function gotGeneration(err, generation) {
 
-		// Get the letter
-		letter = String.fromCharCode(65 + index);
+			var letter,
+			    index,
+			    names,
+			    name,
+			    i;
 
-		that.log('name_creature', 'Should name creature ' + creature.moniker + ' (' + creature.gender + ') with starting letter ' + letter);
+			if (err) {
+				that.log('name_creature', 'Unable to name creature, failure getting generation: ' + err);
+				return done(err);
+			}
 
-		// Get the names
-		names = that.all_names[letter];
+			// Get the letter index
+			index = generation % 26;
 
-		// Sort by ascending use_count
-		names.sortByPath(1, 'use_count', 1, 'name');
+			// Get the letter
+			letter = String.fromCharCode(65 + index);
 
-		// Iterate over all the names
-		for (i = 0; i < names.length; i++) {
-			name = names[i];
+			that.log('name_creature', 'Should name creature ' + creature.moniker + ' (' + creature.gender + ') with starting letter ' + letter);
 
-			if (name[creature.gender]) {
-				// Use this name if it hasn't been used before,
-				// or if reusing names is allowed
-				if (!name.use_count || that.getSetting('reuse_names')) {
-					break;
+			// Get the names
+			names = that.all_names[letter];
+
+			// Sort by ascending use_count
+			names.sortByPath(1, 'use_count', 1, 'name');
+
+			// Iterate over all the names
+			for (i = 0; i < names.length; i++) {
+				name = names[i];
+
+				if (name[creature.gender]) {
+					// Use this name if it hasn't been used before,
+					// or if reusing names is allowed
+					if (!name.use_count || that.getSetting('reuse_names')) {
+						break;
+					} else {
+						name = null;
+					}
 				} else {
 					name = null;
 				}
-			} else {
-				name = null;
-			}
-		}
-
-		if (name) {
-			if (!name.monikers) {
-				name.monikers = [];
 			}
 
-			name.monikers.push(creature.moniker);
-
-			that.log('name_creature', 'Going to set ' + name.name + ' on creature ' + creature.moniker);
-
-			creature.setName(name.name, function done(err) {
-
-				if (err) {
-					that.log('name_creature', 'Error setting name: ' + name.name + ' on ' + creature.moniker + ':', err);
-					return callback(err);
+			if (name) {
+				if (!name.monikers) {
+					name.monikers = [];
 				}
 
-				callback(null, name.name);
-			});
-		} else {
-			that.log('name_creature', 'Unable to name ' + creature.moniker + ' of generation ' + creature.generation + ': Found no name!');
-			callback(null, false);
-		}
+				name.monikers.push(creature.moniker);
+
+				that.log('name_creature', 'Going to set ' + name.name + ' on creature ' + creature.moniker);
+
+				creature.setName(name.name, function _done(err) {
+
+					if (err) {
+						that.log('name_creature', 'Error setting name: ' + name.name + ' on ' + creature.moniker + ':', err);
+						return done(err);
+					}
+
+					done(null, name.name);
+				});
+			} else {
+				that.log('name_creature', 'Unable to name ' + creature.moniker + ' of generation ' + creature.generation + ': Found no name!');
+				done(null, false);
+			}
+		});
 	});
 });
 
@@ -4181,7 +4209,7 @@ ACom.setMethod(function _initWarpedCreature(warped_record, callback) {
  *
  * @author   Jelle De Loecker   <jelle@develry.be>
  * @since    0.1.0
- * @version  0.1.2
+ * @version  0.1.7
  */
 ACom.setMethod(function _initCreature(creature, callback) {
 
@@ -4371,13 +4399,12 @@ ACom.setMethod(function _initCreature(creature, callback) {
 			// Add a name!
 			if (creature.is_in_world && that.getSetting('name_creatures')) {
 				that.nameCreature(creature, function done() {
-					updating = false;
-					callback();
+					// Done!
 				});
-			} else {
-				updating = false;
-				callback();
 			}
+
+			updating = false;
+			callback();
 		}
 	}
 });

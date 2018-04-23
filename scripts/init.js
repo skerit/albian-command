@@ -26,7 +26,7 @@ var less_options,
 // Error catcher
 window.addEventListener('error', function onError(event) {
 	if (is_dev_mode) {
-		return console.error('Uncaught error:', event.error);
+		console.error('Uncaught error:', event.error, event);
 	}
 
 	debug('Uncaught Error in: "' + event.filename + ' @ ' + event.lineno, event.message);

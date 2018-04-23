@@ -1,3 +1,7 @@
+## 0.1.7 (WIP)
+
+* Name maximum 1 creature at a time
+
 ## 0.1.6 (2018-04-22)
 
 * Remove "chrome-extension:/" bit from error logs
