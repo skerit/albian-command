@@ -75,8 +75,8 @@ var ACom = Function.inherits('Develry.Creatures.Base', function AlbianCommand() 
 	this.all_names = {};
 	this.lower_names = [];
 
-	// The naming queue (we only name 1 creature at a time)
-	this.name_queue = Function.createQueue({limit: 1, enabled: true});
+	// The naming queue (we only name 3 creature at a time)
+	this.name_queue = Function.createQueue({limit: 3, enabled: true});
 
 	this.init();
 
@@ -3900,8 +3900,20 @@ ACom.setMethod(function nameCreature(creature, callback) {
 
 		that.log('name_creature', 'Going to name creature ' + creature.moniker + '...');
 
+		var bomb = Function.timebomb(10000, function onTimeout(err) {
+			that.log('error', 'Timeout naming creature ' + creature.moniker + ': 10s passed');
+
+			try {
+				done(new Error('Getting creatures timeout after 10 seconds, with update set to ' + update));
+			} catch (err) {
+				next();
+			}
+		});
+
 		function done(err, name) {
 			next();
+
+			bomb.defuse();
 
 			if (err) {
 				callback(err);
@@ -3911,6 +3923,8 @@ ACom.setMethod(function nameCreature(creature, callback) {
 
 			creature.unsee('naming_creature');
 		}
+
+		done = Function.regulate(done);
 
 		creature.getGeneration(function gotGeneration(err, generation) {
 
@@ -4414,7 +4428,7 @@ ACom.setMethod(function _initCreature(creature, callback) {
  *
  * @author   Jelle De Loecker   <jelle@develry.be>
  * @since    0.1.1
- * @version  0.1.2
+ * @version  0.1.7
  */
 ACom.setMethod(function _initEgg(egg, callback) {
 
@@ -4426,10 +4440,11 @@ ACom.setMethod(function _initEgg(egg, callback) {
 
 	els = egg.acom_elements;
 
+	if (callback) {
+		egg.afterOnce('updated', callback);
+	}
+
 	if (els) {
-		if (callback) {
-			egg.afterOnce('updated', callback);
-		}
 		return;
 	}
 
