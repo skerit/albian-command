@@ -2088,7 +2088,7 @@ ACom.setMethod(function doResumeEggAction(action_element, egg) {
  *
  * @author   Jelle De Loecker   <jelle@develry.be>
  * @since    0.1.4
- * @version  0.1.4
+ * @version  0.1.7
  */
 ACom.setMethod(function doFindAllEggsAction(action_element) {
 
@@ -2102,7 +2102,7 @@ ACom.setMethod(function doFindAllEggsAction(action_element) {
 		'setv var0 4750',
 		'enum 2 5 2',
 			'doif pose le 3',
-				'addv var0 20',
+				'addv var0 10',
 				'mvto var0 720',
 				'setv grav 1',
 				'sys: camt',
@@ -3753,7 +3753,7 @@ ACom.setAfterMethod('ready', function getCreatures(callback) {
  *
  * @author   Jelle De Loecker   <jelle@develry.be>
  * @since    0.1.1
- * @version  0.1.1
+ * @version  0.1.7
  */
 ACom.setAfterMethod('ready', function getEggs(callback) {
 
@@ -3803,7 +3803,7 @@ ACom.setAfterMethod('ready', function getEggs(callback) {
 				if (egg.paused) {
 					paused_count++;
 				} else {
-					unpaused_count;
+					unpaused_count++;
 				}
 			});
 
@@ -3898,9 +3898,12 @@ ACom.setMethod(function nameCreature(creature, callback) {
 
 	this.name_queue.add(function doNameCreature(next) {
 
+		var done;
+
 		that.log('name_creature', 'Going to name creature ' + creature.moniker + '...');
 
 		var bomb = Function.timebomb(10000, function onTimeout(err) {
+			creature.unsee('naming_creature');
 			that.log('error', 'Timeout naming creature ' + creature.moniker + ': 10s passed');
 
 			try {
@@ -3910,7 +3913,9 @@ ACom.setMethod(function nameCreature(creature, callback) {
 			}
 		});
 
-		function done(err, name) {
+		done = Function.regulate(function done(err, name) {
+			creature.unsee('naming_creature');
+
 			next();
 
 			bomb.defuse();
@@ -3920,11 +3925,7 @@ ACom.setMethod(function nameCreature(creature, callback) {
 			} else {
 				callback(null, name);
 			}
-
-			creature.unsee('naming_creature');
-		}
-
-		done = Function.regulate(done);
+		});
 
 		creature.getGeneration(function gotGeneration(err, generation) {
 

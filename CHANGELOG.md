@@ -2,6 +2,7 @@
 
 * Name maximum 3 creatures at once
 * Fix new eggs causing update timeouts
+* Fix bug where too many eggs where being unpaused
 
 ## 0.1.6 (2018-04-22)
 
