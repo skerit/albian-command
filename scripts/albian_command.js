@@ -1105,11 +1105,12 @@ ACom.setMethod(function setAcceleration(value, callback) {
  *
  * @author   Jelle De Loecker   <jelle@develry.be>
  * @since    0.1.0
- * @version  0.1.4
+ * @version  0.1.8
  */
 ACom.setMethod(function update(callback) {
 
 	var that = this,
+	    states = [],
 	    bomb;
 
 	if (!callback) {
@@ -1119,7 +1120,9 @@ ACom.setMethod(function update(callback) {
 	callback = Function.regulate(callback);
 
 	bomb = Function.timebomb(10000, function onTimeout(err) {
+		that.unsee('updating');
 		that.log('Update timeout! ' + err);
+		console.log('Update timeout, states are:', states);
 		callback(new Error('Creatures update timeout after 10 seconds'));
 	});
 
@@ -1149,10 +1152,30 @@ ACom.setMethod(function update(callback) {
 		that.log('updating', 'Updating creatures...');
 
 		Fn.parallel(function getCreatures(next) {
-			that.getCreatures(next);
+			that.getCreatures(function gotCreatures(err) {
+
+				if (err) {
+					states.push('got_creatures_err', err);
+				} else {
+					states.push('got_creatures');
+				}
+
+				next(err);
+			});
 		}, function getEggs(next) {
-			that.getEggs(next);
+			that.getEggs(function gotCreatures(err) {
+
+				if (err) {
+					states.push('got_eggs_err', err);
+				} else {
+					states.push('got_eggs');
+				}
+
+				next(err);
+			});
 		}, function done(err) {
+			states.push('done');
+
 			bomb.defuse();
 			that.log('Updated creatures!');
 			callback(err);

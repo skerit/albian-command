@@ -1,8 +1,12 @@
+## 0.1.8 (WIP)
+
+* Unsee `updating` event after a timeout
+
 ## 0.1.7 (2018-04-27)
 
 * Name maximum 3 creatures at once
 * Fix new eggs causing update timeouts
-* Fix bug where too many eggs where being unpaused
+* Fix bug where too many eggs were being unpaused
 * Fix CAOS normalization before sending to game
 
 ## 0.1.6 (2018-04-22)
