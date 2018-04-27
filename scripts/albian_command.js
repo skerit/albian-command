@@ -3170,8 +3170,15 @@ ACom.setAfterMethod('ready', function loadCaosTab(element) {
 		// Replace all newlines with commas
 		code = code.replace(/\n/g, ',');
 
+		// Make sure all the whitespace is a regular space
+		code = code.replace(/\s+/g, ' ');
+
 		// Replace all duplicate commas with a single comma
 		code = code.replace(/,+/g, ',');
+
+		// Replace all commas with spaces to regular commas
+		code = code.replace(/, /g, ',');
+		code = code.replace(/ ,/g, ',');
 
 		that.capp.ole.sendCAOS(code, function gotResult(err, result) {
 
