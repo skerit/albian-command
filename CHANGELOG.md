@@ -1,4 +1,4 @@
-## 0.1.7 (WIP)
+## 0.1.7 (2018-04-27)
 
 * Name maximum 3 creatures at once
 * Fix new eggs causing update timeouts
