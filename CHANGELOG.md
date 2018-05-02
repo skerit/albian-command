@@ -1,6 +1,9 @@
 ## 0.1.8 (WIP)
 
 * Unsee `updating` event after a timeout
+* Add inspector tab
+* Add amount of genes an egg has to the table
+* Pause eggs that have more than 900 genes
 
 ## 0.1.7 (2018-04-27)
 

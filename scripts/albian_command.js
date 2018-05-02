@@ -131,9 +131,9 @@ ACom.setProperty('warped_creatures_headers', ['picture', 'name', 'received', 'se
  *
  * @author   Jelle De Loecker   <jelle@develry.be>
  * @since    0.1.1
- * @version  0.1.4
+ * @version  0.1.8
  */
-ACom.setProperty('eggs_headers', ['picture', 'moniker', 'mother', 'father', 'gender', 'stage', 'progress', 'status']);
+ACom.setProperty('eggs_headers', ['picture', 'moniker', 'mother', 'father', 'gender', 'genes', 'stage', 'progress', 'status']);
 
 /**
  * The table headers of the peers list
@@ -3231,6 +3231,109 @@ ACom.setAfterMethod('ready', function loadCaosTab(element) {
 });
 
 /**
+ * Load the inspector tab
+ *
+ * @author   Jelle De Loecker   <jelle@develry.be>
+ * @since    0.1.8
+ * @version  0.1.8
+ */
+ACom.setAfterMethod('ready', function loadInspectorTab(element) {
+
+	'use strict';
+
+	var that = this;
+
+	if (this._loaded_inspector_tab) {
+		return;
+	}
+
+	this._loaded_inspector_tab = true;
+
+	let $start   = $('.inspector-start', element),
+	    active   = false,
+	    $family  = $('.inspector-family  .value', element),
+	    $genus   = $('.inspector-genus   .value', element),
+	    $species = $('.inspector-species .value', element),
+	    $unid    = $('.inspector-unid    .value', element);
+
+	$start.on('click', function onClick(e) {
+
+		e.preventDefault();
+
+		if (active) {
+			active = false;
+			$start.text('Start Inspecting');
+		} else {
+			active = true;
+			$start.text('Stop Inspecting...');
+			startInspecting();
+		}
+	});
+
+	let inspect_code = 'enum 0 0 0,doif touc targ pntr gt 0,doif targ ne pntr,sys: edit posl post posr posb,dde: putv fmly,dde: putv gnus,dde: putv spcs,dde: putv unid,stop,endi,endi,next';
+
+	function startInspecting() {
+
+		that.capp.command(inspect_code, function gotResponse(err, response) {
+
+			// Queue the next one
+			if (active) {
+				setTimeout(startInspecting, 600);
+			}
+
+			if (err) {
+				return that.log('error', 'Error inspecting: ' + err);
+			}
+
+			let pieces     = response.split('|'),
+			    family_nr  = pieces[0],
+			    family     = that.capp.classification_system[family_nr],
+			    genus_nr   = pieces[1],
+			    genus,
+			    species_nr = pieces[2],
+			    species,
+			    unid       = pieces[3],
+			    text;
+
+			text = family_nr;
+
+			if (family) {
+				text += ': ' + family.name;
+				genus = family.genus[genus_nr];
+			}
+
+			$family.html(text);
+
+			text = genus_nr;
+
+			if (genus) {
+				if (typeof genus == 'string') {
+					text += ': ' + genus;
+				} else {
+					text += ': ' + genus.name;
+					species = genus.species[species_nr];
+				}
+			}
+
+			$genus.text(text);
+
+			text = species_nr;
+
+			if (species) {
+				if (typeof species == 'string') {
+					text += ': ' + species;
+				} else {
+					text += ': ' + species.name;
+				}
+			}
+
+			$species.text(text);
+			$unid.text(unid);
+		});
+	}
+});
+
+/**
  * Load the scriptorium tab
  *
  * @author   Jelle De Loecker   <jelle@develry.be>
@@ -3861,6 +3964,12 @@ ACom.setAfterMethod('ready', function getEggs(callback) {
 					}
 
 					if (egg.paused) {
+
+						// Don't resume eggs with too many genes
+						if (egg.gene && egg.gene.amount_of_genes > 900) {
+							return;
+						}
+
 						that.log('Resuming paused egg ' + egg.moniker);
 						egg.resume();
 						paused_count--;
@@ -3868,6 +3977,16 @@ ACom.setAfterMethod('ready', function getEggs(callback) {
 					}
 				});
 			}
+
+			// Pause all eggs that have too many genes
+			eggs.forEach(function eachEgg(egg) {
+				if (egg.gene && egg.gene.amount_of_genes > 900) {
+					if (!egg.paused) {
+						that.log('Pausing egg ' + egg.moniker + ' because it has too many genes: ' + egg.gene.amount_of_genes);
+						egg.pause();
+					}
+				}
+			});
 
 			callback(null, eggs);
 		});
@@ -4459,7 +4578,7 @@ ACom.setMethod(function _initCreature(creature, callback) {
  *
  * @author   Jelle De Loecker   <jelle@develry.be>
  * @since    0.1.1
- * @version  0.1.7
+ * @version  0.1.8
  */
 ACom.setMethod(function _initEgg(egg, callback) {
 
@@ -4575,6 +4694,8 @@ ACom.setMethod(function _initEgg(egg, callback) {
 		if (egg.father) {
 			els.father.textContent = egg.father.name;
 		}
+
+		els.genes.textContent = egg.gene.amount_of_genes;
 
 		egg_img.image_index = egg.stage;
 
