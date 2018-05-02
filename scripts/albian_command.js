@@ -4650,11 +4650,14 @@ ACom.setMethod(function _initEgg(egg, callback) {
 		$row.after(corow);
 	});
 
-	// Create the egg image (we use the first egg image for now)
-	egg_img = document.createElement('s16-image');
-	egg_img.s16 = 'eggs.s16';
-	egg_img.image_index = 0;
-	els.picture.appendChild(egg_img);
+	// // Create the egg image (we use the first egg image for now)
+	// egg_img = document.createElement('s16-image');
+	// egg_img.s16 = 'eggs.s16';
+	// egg_img.image_index = 0;
+	// els.picture.appendChild(egg_img);
+
+	els.canvas = createCreatureCanvas(egg);
+	els.picture.appendChild(els.canvas);
 
 	// Initial update
 	updateEgg();
@@ -4697,7 +4700,7 @@ ACom.setMethod(function _initEgg(egg, callback) {
 
 		els.genes.textContent = egg.gene.amount_of_genes;
 
-		egg_img.image_index = egg.stage;
+		//egg_img.image_index = egg.stage;
 
 		els.status.textContent = egg.paused ? 'Paused' : '';
 	}
