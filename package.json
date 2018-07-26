@@ -14,7 +14,7 @@
 	"dependencies": {
 		"albian-babel" : "~0.1.4",
 		"creatures"    : "~0.2.6",
-		"less"         : "3.0.0",
+		"less"         : "3.0.2",
 		"nedb"         : "~1.8.0"
 	},
 	"devDependencies": {
